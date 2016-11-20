@@ -64,6 +64,7 @@
   \vhEntry{0.2}{2014/07/14}{vollenbrockjhj}{news, narrowcast, and committee module}
   \vhEntry{0.3}{2014/07/14}{vollenbrockjhj}{company module and activity module}
   \vhEntry{0.4}{2014/07/15}{vollenbrockjhj}{typography, layout, document style}
+  \vhEntry{0.5}{2016/11/20}{albertskja}{Added Narrowcast.getHistoricActivitiesWithPictures and added optional parameter to News.getNews.}
 \end{versionhistory}
 
 \tableofcontents
@@ -350,7 +351,11 @@ The API exposes different methods. These methods are all grouped into modules. A
 \item[Method] getNews
 \item[Description] Retrieves a list of recent news articles.
 \item[Parameters] 
-	Amount: The amount of most recent items to return
+    \begin{enumerate}
+        \item[amount] The amount of most recent items to return
+        \item[render_markdown] A boolean that indicates whether you want to render markdown in the introduction and content to HTML, OPTIONAL, default false.
+    \end{enumerate}
+
 \item[Returns] An array of dictionaries containing the following members:
 \begin{enumerate}
     \item[title] The title of this item
@@ -365,7 +370,15 @@ The API exposes different methods. These methods are all grouped into modules. A
 <-- {"result": [{
         "title": "Read our latest blog post!", 
         "publication-date": "2014-07-04T12:29:06Z", 
-        "introduction": "lalalala this is a short intro.. Lees meer...", 
+        "introduction": "lalalala this is a _short_ intro.. Lees meer...", 
+        "content": "Long long story." 
+    }]}
+
+--> {"method":"getNews", "params":[1, true]}
+<-- {"result": [{
+        "title": "Read our latest blog post!", 
+        "publication-date": "2014-07-04T12:29:06Z", 
+        "introduction": "lalalala this is a <i>short</i> intro.. Lees meer...", 
         "content": "Long long story." 
     }]}
 \end{lstlisting}
@@ -392,6 +405,36 @@ The API exposes different methods. These methods are all grouped into modules. A
         "name": "Super awesome company, work here!", 
         "image": "https://url.to/banner.png"
     }]}
+\end{lstlisting}
+\end{enumerate}
+
+\subsection{getHistoricActivitiesWithPictures}
+\begin{enumerate}
+\item[Method] getHistoricActivitiesWithPictures
+\item[Description] Retrieves a list of a number of random activities between two dates that have pictures
+\item[Parameters] This method accepts the following parameters:
+    \begin{enumerate}
+        \item[begin] The minimal end date, RFC3339 (inclusive)
+        \item[end] The maximal begin date, RFC3339 (exclusive) 
+        \item[Amount] The amount of activities
+        \item[Token] An authentication token, can be null or omitted, OPTIONAL
+    \end{enumerate}
+\item[Returns] An array of dictionaries containing the following members:
+\begin{enumerate}
+    \item[id] The identifier for this activity
+    \item[title] The title of this activity
+    \item[location] The location of this event.
+    \item[begin-date] The starting date and time of this event (RFC3339)
+    \item[end-date] The end date and time of this event (RFC3339)
+    \item[thumbnail] An URL to the thumbnail image for this event.
+    \item[source]: The source of this event (always "inter-actief")
+    \item[pictures]: An array of URL's to the individual pictures of this event.
+    \item[url]: The URL to the pictures page of this event.
+    \end{enumerate}
+\item[Errors] (none)
+\item[Example]
+\begin{lstlisting}
+--> {"method":"getHistoricActivitiesWithPictures", "params":["2014-07-01T00:00:00+02:00", "2014-07-31T23:59:59+02:00", 2, "token"]}
 \end{lstlisting}
 \end{enumerate}
 
