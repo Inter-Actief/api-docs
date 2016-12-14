@@ -8,7 +8,7 @@
 \setlist[enumerate,2]{leftmargin=4em}
 \setlist[enumerate,1]{format=\bfseries,leftmargin=2em}
 
-\interlinepenalty 10000 
+\interlinepenalty 10000
 
 \colorlet{punct}{red!60!black}
 \definecolor{background}{HTML}{F8F8F8}
@@ -64,24 +64,40 @@
   \vhEntry{0.2}{2014/07/14}{vollenbrockjhj}{news, narrowcast, and committee module}
   \vhEntry{0.3}{2014/07/14}{vollenbrockjhj}{company module and activity module}
   \vhEntry{0.4}{2014/07/15}{vollenbrockjhj}{typography, layout, document style}
-  \vhEntry{0.5}{2016/11/20}{albertskja}{Added Narrowcast.getHistoricActivitiesWithPictures and added optional parameter to News.getNews.}
+  \vhEntry{0.5}{2016/11/20}{albertskja}{Added Narrowcast.getHistoricActivitiesWithPictures and added optional
+  parameter to getNews}
+  \vhEntry{0.6}{2016/11/30}{boerpb}{property naming convention, restaurant and dish activity option properties}
+  \vhEntry{0.7}{2016/11/30}{boerpb}{added listing of additional return properties of getActivityStream}
+  \vhEntry{0.8}{2016/12/14}{boerpb}{authentication and preview mode descriptions revised}
+  \vhEntry{0.9}{2016/12/14}{boerpb}{person and push module}
 \end{versionhistory}
 
 \tableofcontents
 
 
 \chapter{Introduction}
-This document describes the jsonrpc application programming interface of amelie, the administration system of I.C.T.S.V. Inter-/Actief/. It should guide you through the different exposed entities and provide basic pointers to help you to enable your application to consume this data from amelie. \\
+This document describes the jsonrpc application programming interface of amelie, the administration system of I.C.T.S.V. Inter-/Actief/. It should guide you through the different exposed entities and provide basic pointers to help you to enable your application to consume this data from amelie.\\
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119.
 
 \section{Endpoints}
-The current version of the API (codename lennart) can be reached at:\\
-https://api.ia.utwente.nl/app/lennart/\\
+The current version of the API (codename lennart) can be reached in both production and staging environments. The sandboxed staging environment has been created to ensure production data integrity.
+
+\subsection{Production Environment}
+To access the API in the production environment, the following endpoint has to be used:
+\begin{lstlisting}
+https://api.ia.utwente.nl/app/lennart/
+\end{lstlisting}
 Please note that the trailing slash is required.
 
-\section{Preview Mode}
-To ensure production data integrity, a sandboxed environment has been created. In order to access this environment, make sure to include or append the string `PREVIEWMODE' in the HTTP User-Agent header.
+\subsection{Staging Environment}
+To access the API in the staging environment, the following endpoint has to be used:
+\begin{lstlisting}
+https://staging.inter-actief.utwente.nl/api/
+\end{lstlisting}
+Please note that the trailing slash is required.
+
+\clearpage
 
 \section{JSON-RPC Request}
 In order to execute a remote procedure, you must send an HTTP POST request, containing a json dictionary in compliance to the JSON-RPC 2.0 specification\cite{jsonrpc}. This implies that each request dictionary must at least contain the following keys:
@@ -97,8 +113,6 @@ An identifier established by the Client that MUST contain a String or Number.  N
 \end{enumerate}
 The `id' and `jsonrpc' fields are ommitted in all examples.
 
-\clearpage
-
 \section{JSON-RPC Response}
 After sending a request, a response object will be returned. The response object consists of a json dictionary containing the following keys:
 \begin{enumerate}
@@ -109,28 +123,34 @@ The value of this member is determined by the method invoked on the Server.
 \item[error]
 This member only exists if an error has occured. The structure of this member is defined in \autoref{sec:errordict}. If no error has occured, this member MAY also be null.
 \item[id]
-This member contains the value of the id member in the Request Object. If the id could not be parsed due to a parse error, it will be set to null. 
+This member contains the value of the id member in the Request Object. If the id could not be parsed due to a parse error, it will be set to null.
 \end{enumerate}
 The `id' and `jsonrpc' fields are ommitted in all examples.
 
+\clearpage
 
 \section{Device ID}
-Some methods may require a device ID. A device ID is an unique token, used to identify your device or service. Obtaining a new deviceId can be done through the getDeviceId method as described in \autoref{m:getDeviceId}.
+Some methods may require a deviceId. A deviceId is an unique token, used to identify your device or service. Obtaining a new deviceId can be done through the getDeviceId method as described in \autoref{m:getDeviceId}.
 
 \section{Authentication \& Authorization}
-Some methods MAY or MUST be invoked using authentication. In order to make an authenticated call, your application MUST first request an authentication token. This can be done using the getAuthToken method. More information can be found in \autoref{m:getAuthToken}.
+Some methods MAY or MUST be invoked using authentication. In order to make an authenticated call, your application MUST first request an authentication token. This can be done using the getAuthToken method. More information can be found in \autoref{m:getAuthToken}.\\\\
+When used, an authentication token MUST be included in the HTTP Authorization header in the following fashion:
+\begin{lstlisting}
+Bearer some.long.auth.token!%&...
+\end{lstlisting}
 
 
 \chapter{Methods}
-The API exposes different methods. These methods are all grouped into modules. A module contains the methods involving a specific entity of amelie. 
+The API exposes different methods. These methods are all grouped into modules. A module contains the methods involving a specific entity of amelie.
 
 \section{Authentication Module}\label{sec:authmodule}
 \subsection{getDeviceId}\label{m:getDeviceId}
 \begin{enumerate}
 \item[Method] getDeviceId
-\item[Description] Requests a new device id. Your application SHOULD call this method only once in your apps lifetime, just after its first start, and store the result for further use.
+\item[Description] Requests a new deviceId. Your application SHOULD call this method only once in your apps lifetime, just after its first start, and store the result for further use.
+\item[Authentication] (none)
 \item[Parameters] (none)
-\item[Returns] A string containing a newly assigned device ID
+\item[Returns] A string containing a newly assigned deviceId
 \item[Errors] (none)
 \item[Example]
 \begin{lstlisting}
@@ -139,192 +159,305 @@ The API exposes different methods. These methods are all grouped into modules. A
 \end{lstlisting}
 \end{enumerate}
 
-
 \subsection{getAuthToken}\label{m:getAuthToken}
 \begin{enumerate}
 \item[Method] getAuthToken
-\item[Description] Attempts to log in and returns an authentication token. 
+\item[Description] Attempts to log in and returns an authentication token.
+\item[Authentication] (none)
 \item[Parameters] This method accepts the following parameters:
-	\begin{enumerate}
-		\item[username] The username of the user 
-    	\item[password] The password of the user 
-    	\item[deviceId] The device ID obtained through getDeviceId.
-     \end{enumerate}
+\begin{enumerate}
+    \item[username] The username of the user
+    \item[password] The password of the user
+    \item[deviceId] The device ID obtained through getDeviceId.
+    \end{enumerate}
 \item[Returns] A string containing the auth token, or null if the authentication failed.
 \item[Errors] UnknownDeviceError: when the device ID was not recognized.
 \item[Example]
 \begin{lstlisting}
 --> {"method":"getAuthToken", "params":["user","pass","deviceId"]}
-<-- {"result": "Some.long.auth.token!%&..."}
-<-- {"result": null}
+<-- {"result": "some.long.auth.token!%&..."}
 \end{lstlisting}
 \end{enumerate}
 
+\clearpage
 \subsection{checkAuthToken}
 \begin{enumerate}
 \item[Method] checkAuthToken
-\item[Description] Checks if an auth token is still valid. It is recommended to do this after resuming your app, to see if the token was revoked. 
+\item[Description] Checks if an auth token is still valid. It is recommended to do this after resuming your app, to see if the token was revoked.
+\item[Authentication] (none)
 \item[Parameters] This method accepts the following parameters:
-	\begin{enumerate}
-		\item[token] The authentication token, obtained with getAuthToken
+\begin{enumerate}
+    \item[token] The authentication token, obtained with getAuthToken
     \end{enumerate}
 \item[Returns] true if the token was valid and an user is attached, false otherwise.
 \item[Errors] (none)
 \item[Example]
 \begin{lstlisting}
---> {"method":"checkAuthToken", "params":["Some.long.auth.token!%&..."]}
+--> {"method":"checkAuthToken", "params":["some.long.auth.token!%&..."]}
 <-- {"result": true}
-<-- {"result": false}
 \end{lstlisting}
 \end{enumerate}
 
 \subsection{revokeAuthToken}
 \begin{enumerate}
 \item[Method] revokeAuthToken
-\item[Description] Revokes an Auth token
+\item[Description] Revokes an authentication token.
+\item[Authentication] (none)
 \item[Parameters] This method accepts the following parameters:
-	\begin{enumerate}
-		\item[token] The authentication token, obtained with getAuthToken
+\begin{enumerate}
+    \item[token] The authentication token, obtained with getAuthToken
     \end{enumerate}
-\item[Returns] true if the token was successfully revoked, false otherwise.
+\item[Returns] true if the token was successfully revoked, null otherwise.
 \item[Errors] NotLoggedInError: If the token was not recognized or already revoked.
 \item[Example]
 \begin{lstlisting}
---> {"method":"revokeAuthToken", "params":["Some.long.auth.token!%&..."]}
+--> {"method":"revokeAuthToken", "params":["some.long.auth.token!%&..."]}
 <-- {"result": true}
-<-- {"result": false}
 \end{lstlisting}
 \end{enumerate}
 
 \clearpage
+\subsection{getAuthenticatedApps}
+\begin{enumerate}
+\item[Method] getAuthenticatedApps
+\item[Description] Retrieves the list of authenticated apps for the currently authenticated person.
+\item[Authentication] REQUIRED
+\item[Parameters] (none)
+\item[Returns] An array of dictionaries containing the following members:
+\begin{enumerate}
+    \item[applicationId] The identifier of the application
+    \item[applicationName] The name of the application
+    \item[expires] The expiration date and time for the token associated with the application (RFC3339)
+	\item[scopes] The dictionary of permitted scopes for the application, which MAY include any of the following members:
+    \begin{enumerate}
+        \item[education] Description of the education authentication scope
+        \item[transaction] Description of the transaction authentication scope
+        \item[account] Description of the account authentication scope
+        \item[signup] Description of the signup authentication scope
+        \end{enumerate}
+    \end{enumerate}
+\item[Errors] NotLoggedInError: If the token was not recognized or already revoked.
+\item[Example]
+\begin{lstlisting}
+--> {"method":"getAutenticatedApps", "params":[]}
+<-- {"result": [{
+        "applicationId": 1,
+        "applicationName": "Legacy getAuthToken API token",
+        "expires": "2016-10-26T00:56:14+00:00",
+        "scopes": {
+            "account": "De App krijgt toegang tot je naam, geboortedatum, studentnummer, machtigingstatus en commissiestatus",
+            "signup": "De App kan je in- en uitschrijven voor activiteiten"
+        }
+     }]}
+\end{lstlisting}
+\end{enumerate}
 
+
+\clearpage
+\section{Person Module}\label{sec:personmodule}
 \subsection{getPersonDetails}
 \begin{enumerate}
 \item[Method] getPersonDetails
 \item[Description] Retrieves details of the currently authenticated person.
-\item[Parameters] This method accepts the following parameters:
-	\begin{enumerate}
-		\item[token] The authentication token, obtained with getAuthToken
-    \end{enumerate}
+\item[Authentication] REQUIRED
+\item[Parameters] (none)
 \item[Returns] A dictionary containing the following members:
 \begin{enumerate}
 	\item[name] The full name of this person
-    \item[firstname] The first name of this person
-    \item[lastname] The last name of this person
+    \item[firstName] The first name of this person
+    \item[lastName] The last name of this person
     \item[birthdate] The birthdate of this person
     \item[board] true if this person is a board member, false otherwise
-    \item[candidateboard] true if this person is a candidate board member, false otherwise
+    \item[candidateBoard] true if this person is a candidate board member, false otherwise
     \item[member] true if this person is a member, false otherwise
     \item[hasCommittees] true if this member has joined any committees, false otherwise
     \item[hasActivityDirectDebit] true if this person has signed a debit contract, false otherwise
-    \item[username] The username of this person, can be empty or null.
-    \item[studentId] The student ID of this person, can be null.
-    \item[employeeId] The Employee ID of this person, can be null.
-	\end{enumerate}
+    \item[username] The username of this person, can be empty or null
+    \item[studentId] The student ID of this person, can be null
+    \item[employeeId] The employee ID of this person, can be null
+    \item[email] The email address of this person
+    \item[languagePreference] The preferred language for this user, either "nl" or "en"
+    \item[imageUrl] The profile image URL for the authenticated user
+    \end{enumerate}
 \item[Errors] NotLoggedInError: If the token was not recognized or already revoked.
 \item[Example]
 \begin{lstlisting}
---> {"method":"getPersonDetails", "params":["Some.long.auth.token!%&..."]}
+--> {"method":"getPersonDetails", "params":[]}
 <-- {"result": {
-        "name": "Donald D. Duck", 
-        "firstname": "Donald", 
-        "lastname": "Duck",
-        "birthdate": "1954-02-19", 
+        "name": "Donald D. Duck",
+        "firstName": "Donald",
+        "lastName": "Duck",
+        "birthdate": "1954-02-19",
         "board": false
-        "candidateboard": false, 
-        "member": true, 
+        "candidateBoard": false,
+        "member": true,
         "hasCommittees": true,
-        "hasActivityDirectDebit": true,  
-        "username": "duckdd", 
-        "studentId": "s1234567", 
-        "employeeId": null, 
+        "hasActivityDirectDebit": true,
+        "username": "duckdd",
+        "studentId": "s1234567",
+        "employeeId": null,
+        "email": "d.d.duck@student.utwente.nl",
+        "languagePreference": "nl",
+        "imageUrl": "https://media.ia.utwente.nl/amelie/pasfoto/s1234567.jpg"
      }}
 \end{lstlisting}
 \end{enumerate}
 
-\clearpage
-
-\subsection{storePushToken}
+\subsection{getPersonCommittees}
 \begin{enumerate}
-\item[Method] storePushToken
-\item[Description] Stores a push token. (or URI for MPNS)
-\item[Parameters] This method accepts the following parameters:
-	\begin{enumerate}
-		\item[deviceId] The device ID, obtaind with getDeviceId
-  		\item[token] The push token or URI, received from the push supplier
-    	\item[agent] An descriptive string for your device
-    	\item[language] The language code of the device, preferably RFC5646.
-	\end{enumerate}
-\item[Returns] true if the token was successfully stored.
-\item[Errors] UnknownDeviceError: when the device ID was not recognized.
+\item[Method] getPersonCommittees
+\item[Description] Retrieves a list of committees in which the currently authenticated person has been a member of, or is currently active in.
+\item[Authentication] REQUIRED
+\item[Parameters] (none)
+\item[Returns] An array of dictionaries containing the following members:
+\begin{enumerate}
+	\item[position] The position of this person in this committee
+    \item[end] The date on which this person was last member of this committee, otherwise null
+    \item[begin] The date on which this person first joined this committee
+    \item[committee] The name of this committee
+    \end{enumerate}
+\item[Errors] NotLoggedInError: If the token was not recognized or already revoked.
 \item[Example]
 \begin{lstlisting}
---> {"method":"storePushToken", "params":["deviceId", "push.token", "Bob's iPhone @ iOS 8.0", "nl-NL"]}
-<-- {"result": true}
+--> {"method":"getPersonCommittees", "params":[]}
+<-- {"result": [{
+        "position": "Lead Developer Duckstad",
+        "end": null,
+        "begin": "1954-02-19",
+        "committee": "F.C. Duckstad"
+     }]}
 \end{lstlisting}
 \end{enumerate}
 
 \clearpage
+\subsection{getPersonMembership}
+\begin{enumerate}
+\item[Method] getPersonMembership
+\item[Description] Retrieves the active membership details of the currently authenticated person
+\item[Authentication] REQUIRED
+\item[Parameters] (none)
+\item[Returns] A dictionaries containing the following members:
+\begin{enumerate}
+	\item[type] The type of membership
+    \item[year] The year of the active membership
+    \item[hasEnded] Value indicating whether the membership has ended, either true or false
+    \item[payment] Details regarding the payment of this membership
+    \begin{enumerate}
+        \item[amount] The cost of the active membership
+        \item[date] Date on which the payment was processed
+        \item[method] Details regarding the payment method of the active membership
+        \begin{enumerate}
+            \item[name] Name of the payment method
+            \item[description] Description of the payment method
+            \end{enumerate}
+        \end{enumerate}
+    \end{enumerate}
+\item[Errors] NotLoggedInError: If the token was not recognized or already revoked.
+\item[Example]
+\begin{lstlisting}
+--> {"method":"getPersonMembership", "params":[]}
+<-- {"result": {
+        "type": "inbitween",
+        "year": 2016,
+        "hasEnded": false
+        "payment": {
+            "amount": "4.25",
+            "date": "2016-07-01",
+            "method": {
+                "name": "Stress",
+                "description": "Bij een lidmaatschap van inbitween loopt de betaling via Stress"
+            }
+        }
+     }}
+\end{lstlisting}
+\end{enumerate}
 
 
+\clearpage
+\section{Push Module}\label{sec:pushmodule}
+\subsection{storePushToken}
+\begin{enumerate}
+\item[Method] storePushToken
+\item[Description] Stores a push token (or URI for MPNS).
+\item[Authentication] OPTIONAL
+\item[Parameters] This method accepts the following parameters:
+\begin{enumerate}
+	\item[deviceId] The deviceId, obtaind with getDeviceId
+  	\item[pushToken] The push token or URI, received from the push supplier
+	\item[agent] An descriptive string for your device
+	\item[language] The language code of the device, preferably RFC5646.
+    \end{enumerate}
+\item[Returns] true if the token was successfully stored, otherwise null
+\item[Errors] UnknownDeviceError: when the device ID was not recognized.
+\item[Example]
+\begin{lstlisting}
+--> {"method":"storePushToken", "params":["deviceId", "pushToken", "Bob's iPhone @ iOS 8.0", "nl-NL"]}
+<-- {"result": true}
+<-- {"result": null}
+\end{lstlisting}
+\end{enumerate}
+
+
+\clearpage
 \section{News Module}
 \subsection{getNewsStream}
 \begin{enumerate}
 \item[Method] getNewsStream
-\item[Description] Retrieves a list of recent news items and twitter messages.
+\item[Description] Retrieves a list of recent news items and Twitter messages.
+\item[Authentication] (none)
 \item[Parameters] This method accepts the following parameters:
-	\begin{enumerate}
-		\item[offset] The first item in the list to return
-    	\item[length] The amount of items to return
+\begin{enumerate}
+	\item[offset] The first item in the list to return
+	\item[length] The amount of items to return
     \end{enumerate}
 \item[Returns] An array of dictionaries containing the following members:
 \begin{enumerate}
     \item[id] The identifier for this news item
     \item[title] The title of this item
 	\item[category] The category of this news item
-    \item[image-url] An URL of a thumbnail for this item
+    \item[imageUrl] An URL of a thumbnail for this item
     \item[date] The publication date of this item (RFC3339)
     \item[source] The source of this item
     \item[breakout] true if this item contains its own header, OPTIONAL
-	\end{enumerate}
+    \end{enumerate}
 \item[Errors] (none)
 \item[Example]
 \begin{lstlisting}
 --> {"method":"getNewsStream", "params":[0,1]}
 <-- {"result": [{
         "id": 430,
-        "title": "Read our latest blog post!", 
+        "title": "Read our latest blog post!",
         "category": "twitter",
-        "image-url": "https://pbs.twimg.com/profile_image.png",
-        "date": "2014-07-07T18:56:50+00:00", 
-        "source": "StudyTour", 
-        "breakout": false 
+        "imageUrl": "https://pbs.twimg.com/profile_image.png",
+        "date": "2014-07-07T18:56:50+00:00",
+        "source": "StudyTour",
+        "breakout": false
     }]}
 \end{lstlisting}
 \end{enumerate}
 
 \clearpage
-
 \subsection{getNewsDetailed}
 \begin{enumerate}
 \item[Method] getNewsDetailed
-\item[Description] Retrieves details of a news item, including its content
+\item[Description] Retrieves details of a news item, including its content.
+\item[Authentication] (none)
 \item[Parameters] This method accepts the following parameters:
-	\begin{enumerate}
-		\item[source] The source of the requested item
-    	\item[id] The id of the requested item
+\begin{enumerate}
+	\item[source] The source of the requested item
+	\item[id] The id of the requested item
     \end{enumerate}
 \item[Returns] A Dictionary containing the following fields:
 \begin{enumerate}
     \item[id] The identifier for this news item
     \item[title] The title of this item
 	\item[category] The category of this news item
-    \item[image-url] An URL of a thumbnail for this item
+    \item[imageUrl] An URL of a thumbnail for this item
     \item[date] The publication date of this item (RFC3339)
     \item[source] The source of this item
     \item[breakout] true if this item contains its own header, OPTIONAL
     \item[author] the Author of this news item
-    \item[content] The content of this news item
+    \item[content] The HTML content of this news item
 	\end{enumerate}
 \item[Errors] (none)
 \item[Example]
@@ -332,11 +465,11 @@ The API exposes different methods. These methods are all grouped into modules. A
 --> {"method":"getNewsDetailed", "params":["StudyTour", 430]}
 <-- {"result": {
         "id": 430,
-        "title": "Read our latest blog post!", 
+        "title": "Read our latest blog post!",
         "category": "twitter",
-        "image-url": "https://pbs.twimg.com/profile_image.png",
-        "date": "2014-07-07T18:56:50+00:00", 
-        "source": "StudyTour", 
+        "imageUrl": "https://pbs.twimg.com/profile_image.png",
+        "date": "2014-07-07T18:56:50+00:00",
+        "source": "StudyTour",
         "breakout": false,
         "author": "StudyTour"
         "content": "<html><!--html contents--></html>"
@@ -344,88 +477,130 @@ The API exposes different methods. These methods are all grouped into modules. A
 \end{lstlisting}
 \end{enumerate}
 
+
 \clearpage
-
-\subsection{getNews}
-\begin{enumerate}
-\item[Method] getNews
-\item[Description] Retrieves a list of recent news articles.
-\item[Parameters] 
-    \begin{enumerate}
-        \item[amount] The amount of most recent items to return
-        \item[render\_markdown] A boolean that indicates whether you want to render markdown in the introduction and content to HTML, OPTIONAL, default false.
-    \end{enumerate}
-
-\item[Returns] An array of dictionaries containing the following members:
-\begin{enumerate}
-    \item[title] The title of this item
-	\item[publication-date] The publication date of this news item. (RFC3339)
-    \item[introduction] A short introduction to this news article
-    \item[content] The content of this news article
-	\end{enumerate}
-\item[Errors] (none)
-\item[Example]
-\begin{lstlisting}
---> {"method":"getNews", "params":[1]}
-<-- {"result": [{
-        "title": "Read our latest blog post!", 
-        "publication-date": "2014-07-04T12:29:06Z", 
-        "introduction": "lalalala this is a _short_ intro.. Lees meer...", 
-        "content": "Long long story." 
-    }]}
-
---> {"method":"getNews", "params":[1, true]}
-<-- {"result": [{
-        "title": "Read our latest blog post!", 
-        "publication-date": "2014-07-04T12:29:06Z", 
-        "introduction": "lalalala this is a <i>short</i> intro.. Lees meer...", 
-        "content": "Long long story." 
-    }]}
-\end{lstlisting}
-\end{enumerate}
-
 \section{Narrowcasting Module}
 \subsection{getBanners}
 \begin{enumerate}
 \item[Method] getBanners
 \item[Description] Retrieves a list of sponsored banners.
+\item[Authentication] (none)
 \item[Parameters] (none)
 \item[Returns] An array of dictionaries containing the following members:
 \begin{enumerate}
     \item[id] The ID of the banner
     \item[name] The title of the banner
 	\item[image] An URL to the image of an banner
-	\end{enumerate}
+    \end{enumerate}
 \item[Errors] (none)
 \item[Example]
 \begin{lstlisting}
 --> {"method":"getBanners", "params":[]}
 <-- {"result": [{
-        "id": 15, 
-        "name": "Super awesome company, work here!", 
+        "id": 15,
+        "name": "Super awesome company, work here!",
         "image": "https://url.to/banner.png"
     }]}
 \end{lstlisting}
 \end{enumerate}
+\clearpage
+
+\subsection{getNews}
+\begin{enumerate}
+\item[Method] getNews
+\item[Description] Retrieves a list of recent news articles.
+\item[Authentication] (none)
+\item[Parameters] This method accepts the following parameters:
+\begin{enumerate}
+    \item[amount] The amount of most recent items to return
+    \item[render\_markdown] A boolean that indicates whether you want to render markdown in the introduction and content to HTML, OPTIONAL, default false.
+    \end{enumerate}
+\item[Returns] An array of dictionaries containing the following members:
+\begin{enumerate}
+    \item[id] The id of this item
+    \item[title] The title of this item
+    \item[url] The url of this item
+	\item[publicationDate] The publication date of this news item. (RFC3339)
+    \item[introduction] A short introduction to this news article
+    \item[content] The content of this news article
+    \end{enumerate}
+\item[Errors] (none)
+\item[Example]
+\begin{lstlisting}
+--> {"method":"getNews", "params":[1]}
+<-- {"result": [{
+        "title": "Read our latest blog post!",
+        "url": "/nieuws/304/2016/10/31/boeken-lenen-bij-inter-actief/",
+        "id": 304,
+        "publicationDate": "2014-07-04T12:29:06Z",
+        "introduction": "lalalala this is a _short_ intro.. Lees meer...",
+        "content": "Long long story."
+    }]}
+
+--> {"method":"getNews", "params":[1, true]}
+<-- {"result": [{
+        "title": "Read our latest blog post!",
+        "url": "/nieuws/304/2016/10/31/boeken-lenen-bij-inter-actief/",
+        "id": 304,
+        "publicationDate": "2014-07-04T12:29:06Z",
+        "introduction": "lalalala this is a <i>short</i> intro.. Lees meer...",
+        "content": "Long long story."
+    }]}
+\end{lstlisting}
+\end{enumerate}
+
+\clearpage
+
+\subsection{getTelevisionPromotions}
+\begin{enumerate}
+\item[Method] getTelevisionPromotions
+\item[Description] Retrieves a list of promoted events.
+\item[Authentication] (none)
+\item[Parameters] (none)
+\item[Returns] An array of dictionaries containing the following members:
+\begin{enumerate}
+    \item[title] The title of the banner
+	\item[image] An URL to the image of an banner
+    \item[signup] True if it is possible to sign up for this activity, OPTIONAL
+    \item[signupStart] The start date of the signup period, OPTIONAL (RFC3339)
+    \item[signupStop] The signup deadline, OPTIONAL (RFC3339)
+    \item[signupMaximum] Maximum allowed attendees, OPTIONAL
+    \item[signupAvailable] Amount of current attendees, OPTIONAL
+    \end{enumerate}
+\item[Errors] (none)
+\item[Example]
+\begin{lstlisting}
+--> {"method":"getTelevisionPromotions", "params":[]}
+<-- {"result": [{
+        "image": "https://url.to/promotion.png",
+        "title": "Water Skiing!",
+        "signupStart":"2014-07-03T18:56:50+00:00",
+        "signupStop":"2014-07-08T18:56:50+00:00",
+        "signupMaximum":40,
+        "signupAvailable":12
+    }]}
+\end{lstlisting}
+\end{enumerate}
+\clearpage
 
 \subsection{getHistoricActivitiesWithPictures}
 \begin{enumerate}
 \item[Method] getHistoricActivitiesWithPictures
 \item[Description] Retrieves a list of a number of random activities between two dates that have pictures
+\item[Authentication] OPTIONAL
 \item[Parameters] This method accepts the following parameters:
-    \begin{enumerate}
-        \item[begin] The minimal end date, RFC3339 (inclusive)
-        \item[end] The maximal begin date, RFC3339 (exclusive) 
-        \item[Amount] The amount of activities
-        \item[Token] An authentication token, can be null or omitted, OPTIONAL
+\begin{enumerate}
+    \item[begin] The minimal end date, RFC3339 (inclusive)
+    \item[end] The maximal begin date, RFC3339 (exclusive)
+    \item[amount] The amount of activities
     \end{enumerate}
 \item[Returns] An array of dictionaries containing the following members:
 \begin{enumerate}
     \item[id] The identifier for this activity
     \item[title] The title of this activity
     \item[location] The location of this event.
-    \item[begin-date] The starting date and time of this event (RFC3339)
-    \item[end-date] The end date and time of this event (RFC3339)
+    \item[beginDate] The starting date and time of this event (RFC3339)
+    \item[endDate] The end date and time of this event (RFC3339)
     \item[thumbnail] An URL to the thumbnail image for this event.
     \item[source]: The source of this event (always "inter-actief")
     \item[pictures]: An array of URL's to the individual pictures of this event.
@@ -434,55 +609,35 @@ The API exposes different methods. These methods are all grouped into modules. A
 \item[Errors] (none)
 \item[Example]
 \begin{lstlisting}
---> {"method":"getHistoricActivitiesWithPictures", "params":["2014-07-01T00:00:00+02:00", "2014-07-31T23:59:59+02:00", 2, "token"]}
-\end{lstlisting}
-\end{enumerate}
-
-\subsection{getTelevisionPromotions}
-\begin{enumerate}
-\item[Method] getTelevisionPromotions
-\item[Description] Retrieves a list of promoted events.
-\item[Parameters] (none)
-\item[Returns] An array of dictionaries containing the following members:
-\begin{enumerate}
-    \item[title] The title of the banner
-	\item[image] An URL to the image of an banner
-    \item[signup] True if it is possible to sign up for this activity, OPTIONAL
-    \item[signup\_start] The start date of the signup period, OPTIONAL (RFC3339)
-    \item[signup\_stop] The signup deadline, OPTIONAL (RFC3339)
-    \item[signup\_maximum] Maximum allowed attendees, OPTIONAL
-    \item[signup\_available] Amount of current attendees, OPTIONAL
-	\end{enumerate}
-\item[Errors] (none)
-\item[Example]
-\begin{lstlisting}
---> {"method":"getTelevisionPromotions", "params":[]}
-<-- {"result": [{ 
-        "image": "https://url.to/promotion.png",
-        "title": "Water Skiing!",
-        "signup_start":"2014-07-03T18:56:50+00:00",
-        "signup_stop":"2014-07-08T18:56:50+00:00",
-        "signup_maximum":40,
-        "signup_available":12
+--> {"method":"getHistoricActivitiesWithPictures", "params":["2014-07-01T00:00:00+02:00", "2014-07-31T23:59:59+02:00", 2]}
+<-- {"result": [{
+        "id": 1337
+        "title": "Awesome Activity!",
+        "location": "SmartXP",
+        "beginDate": "2014-07-01T18:56:50+00:00",
+        "endDate": "2014-07-01T20:56:50+00:00",
+        "thumbnail": "https://url.to/image.png",
+        "source": "inter-actief",
+        "pictures": ["https://url.to/image.png", ...],
+        "url": "/activiteiten/1337/fotos"
     }]}
 \end{lstlisting}
 \end{enumerate}
 
 
-
 \clearpage
-
 \section{Committee Module}
 \subsection{getCommitteeStream}
 \begin{enumerate}
 \item[Method] getCommitteeStream
 \item[Description] Retrieves a list of all committees.
+\item[Authentication] (none)
 \item[Parameters] (none)
 \item[Returns] A dictionary of arrays of dictionaries containing the following members:
 \begin{enumerate}
     \item[id] The identifier for this committee
-    \item[title] The name of this committee
-    \item[image-url] An URL of a thumbnail for this committee
+    \item[name] The name of this committee
+    \item[imageUrl] An URL of a thumbnail for this committee
 	\end{enumerate}
 \item[Errors] (none)
 \item[Example]
@@ -490,41 +645,40 @@ The API exposes different methods. These methods are all grouped into modules. A
 --> {"method":"getCommitteeStream", "params":[]}
 <-- {"result": {"ICT": [{
         "id": 12,
-        "title": "AppCie", 
-        "image-url": "https://url.to/image.png"
+        "name": "AppCie",
+        "imageUrl": "https://url.to/image.png"
     }], "Travel":[...]
     }}
 \end{lstlisting}
 \end{enumerate}
-
+\clearpage
 
 \subsection{getCommitteeDetailed}
 \begin{enumerate}
 \item[Method] getCommitteeDetailed
 \item[Description] Retrieves details of committee, including its members
+\item[Authentication] OPTIONAL
 \item[Parameters] This method accepts the following parameters:
-	\begin{enumerate}
-    	\item[id] The id of the requested item
-    	\item[token] An authentication token, OPTIONAL, can also be null
+\begin{enumerate}
+	\item[id] The id of the requested item
     \end{enumerate}
 \item[Returns] A Dictionary containing the following fields:
 \begin{enumerate}
-    \item[id] The identifier for this committee
     \item[name] The name of this committee
-    \item[image-url] An URL of a logo for this committee
+    \item[imageUrl] An URL of a logo for this committee
     \item[founded] The  date of this committee was founded (RFC3339)
     \item[description] A description of this committee
     \item[email] the email adress of this committee
     \item[members] an array of dictionaries representing members of this committee:
-    	\begin{enumerate}
+	\begin{enumerate}
         \item[name] The full name of this member
-        \item[firstname] The first name of this member
-        \item[lastname] The family name of this member
+        \item[firstName] The first name of this member
+        \item[lastName] The family name of this member
         \item[function] The function of this member within the committee
-        \item[phone] The phone number of this member*
-        \item[email] The email address of this member*
+        \item[phone] The phone number of this member, otherwise null*
+        \item[email] The email address of this member, otherwise null*
+        \item[] *Requires an authenticated call and being a member this committee
         \end{enumerate}
-        *Requires authenticated call and is only visible when you are a member of this committee. Otherwise this member is null or not present.
 	\end{enumerate}
 \item[Errors] (none)
 \item[Example]
@@ -532,36 +686,36 @@ The API exposes different methods. These methods are all grouped into modules. A
 --> {"method":"getCommitteeDetailed", "params":[12]}
 <-- {"result": {
         "id": 12,
-        "name": "AppCie", 
-        "image-url": "https://pbs.twimg.com/profile_image.png",
-        "founded": "2011-07-07T18:56:50+00:00", 
-        "description": "This committee develops and mantains the IApp", 
+        "name": "AppCie",
+        "imageUrl": "https://pbs.twimg.com/profile_image.png",
+        "founded": "2011-07-07T18:56:50+00:00",
+        "description": "This committee develops and mantains the IApp",
         "email": "nospam@inter-actief.net",
         "members": [{
             	"name":"Donald Duck",
-                "firstname": "Donald",
-                "lastname": "Duck",
+                "firstName": "Donald",
+                "lastName": "Duck",
                 "function": "Quacker",
                 "phone": null,
                 "email": null
-            },{...},{...}]
-    }}
+        }}}
 \end{lstlisting}
 \end{enumerate}
 
-\clearpage
 
+\clearpage
 \section{Company Module}
 \subsection{getCompanyStream}
 \begin{enumerate}
 \item[Method] getCompanyStream
 \item[Description] Retrieves a list of partnered companies.
+\item[Authentication] (none)
 \item[Parameters] (none)
 \item[Returns] An array of dictionaries containing the following members:
 \begin{enumerate}
     \item[id] The identifier for this news item
     \item[title] The title of this item
-    \item[image-url] An URL of a logo for this company
+    \item[imageUrl] An URL of a logo for this company
 	\end{enumerate}
 \item[Errors] (none)
 \item[Example]
@@ -569,8 +723,8 @@ The API exposes different methods. These methods are all grouped into modules. A
 --> {"method":"getCompanyStream", "params":[]}
 <-- {"result": [{
         "id": 28,
-        "title": "University of Twente", 
-        "image-url": "https://pbs.twimg.com/profile_image.png"
+        "title": "University of Twente",
+        "imageUrl": "https://pbs.twimg.com/profile_image.png"
     }]}
 \end{lstlisting}
 \end{enumerate}
@@ -579,57 +733,76 @@ The API exposes different methods. These methods are all grouped into modules. A
 \subsection{getCompanyDetailed}
 \begin{enumerate}
 \item[Method] getCompanyDetailed
-\item[Description] Retrieves company details, including its promotional content
-\item[Parameters] 
-    id: The id of the requested item
+\item[Description] Retrieves company details, including its promotional content.
+\item[Authentication] (none)
+\item[Parameters] This method accepts the following parameters:
+\begin{enumerate}
+    \item[id] The id of the requested item
+    \end{enumerate}
 \item[Returns] A Dictionary containing the following fields:
 \begin{enumerate}
     \item[name] The name of this company
-    \item[description] The content of this news item
+    \item[description] The HTML content of this news item
 	\end{enumerate}
 \item[Errors] (none)
 \item[Example]
 \begin{lstlisting}
 --> {"method":"getCompanyDetailed", "params":[28]}
 <-- {"result": {
-        "name": "University of Twente", 
+        "name": "University of Twente",
         "description": "<html><!--html contents--></html>"
     }}
 \end{lstlisting}
 \end{enumerate}
 
 
+\clearpage
 \section{Activity Module}
 \subsection{getActivityStream}
 \begin{enumerate}
 \item[Method] getActivityStream
-\item[Description] Retrieves a list of activities
+\item[Description] Retrieves a list of activities.
+\item[Authentication] OPTIONAL
 \item[Parameters] This method accepts the following parameters:
-	\begin{enumerate}
-		\item[begin] The minimal end date, RFC3339 (inclusive)
-        \item[end] The maximal begin date, RFC3339 (exclusive) 
-        \item[token] An authentication token, can be null or omitted, OPTIONAL
+\begin{enumerate}
+	\item[begin] The minimal end date, RFC3339 (inclusive)
+    \item[end] The maximal begin date, RFC3339 (exclusive)
     \end{enumerate}
 \item[Returns] An array of dictionaries containing the following members:
 \begin{enumerate}
-    \item[id] The identifier for this news item
-    \item[title] The title of this item
-    \item[begin-date] The starting date and time of this event (RFC3339)
-    \item[end-date] The end date and time of this event (RFC3339)
-    \item[signup] either "required", "recommended" or "nosignup"
-    \item[signedup] true if logged in and signed up, false otherwise
+    \item[id] The identifier for this activity
+    \item[title] The title of this activity
+    \item[beginDate] The starting date and time of this activity (RFC3339)
+    \item[endDate] The end date and time of this activity (RFC3339)
+    \item[signup] either "required" or "nosignup"
+    \item[signedUp] true if logged in and signed up, otherwise false
+    \item[imageUrl] The URL of the activity image or icon, otherwise null
+    \item[location] The location of this activity
+    \item[source] The provider of this activity
+    \item[signupAvailable] true if it is possible to sign up, otherwise false
+    \item[signupStart] The date and time when registration opens (RFC3339), otherwise null
+    \item[signupStop] The date and time when registration closes (RFC3339), otherwise null
+    \item[url] The URL for this activity
 	\end{enumerate}
 \item[Errors] (none)
+\clearpage
 \item[Example]
 \begin{lstlisting}
 --> {"method":"getActivityStream", "params":["2014-07-01T00:00:00+02:00", "2014-07-31T23:59:59+02:00", "token"]}
 <-- {"result": [{
         "id": 28,
-        "title": "Project Evening", 
-        "begin-date": "2014-07-02T018:00:00+02:00",
-        "end-date": "2014-07-03T08:00:00+02:00",
+        "title": "Project Evening",
+        "beginDate": "2014-07-02T018:00:00+02:00",
+        "endDate": "2014-07-03T08:00:00+02:00",
         "signup": "required",
-        "signedup": false
+        "signedUp": false,
+        "imageUrl": "https://media.ia.utwente.nl/amelie/activiteiten/icoon/logo.png",
+        "location": "Carre 2K",
+        "source": "inter-actief",
+        "signupAvailable": true,
+        "signupStart": "2014-07-02T018:00:00+02:00",
+        "signupStop": "2014-07-02T018:00:00+02:00",
+        "url": "/activiteiten/28/"
     }, {...}, {...}]}
 \end{lstlisting}
 \end{enumerate}
@@ -639,52 +812,53 @@ The API exposes different methods. These methods are all grouped into modules. A
 \subsection{getActivityDetailed}
 \begin{enumerate}
 \item[Method] getActivityDetailed
-\item[Description] Retrieves details of an event, including its signup options
+\item[Description] Retrieves details of an event, including its signup options.
+\item[Authentication] OPTIONAL
 \item[Parameters] This method accepts the following parameters:
-	\begin{enumerate}
-    	\item[id] The id of the requested item
-    	\item[token] An authentication token, can be null or omitted, OPTIONAL
+\begin{enumerate}
+	\item[id] The id of the requested item
+	\item[token] An authentication token, can be null or omitted, OPTIONAL
     \end{enumerate}
 \item[Returns] A Dictionary containing the following fields:
 \begin{enumerate}
     \item[id] The identifier for this news item
     \item[title] The title of this item
-    \item[begin-date] The starting date and time of this event (RFC3339)
-    \item[end-date] The end date and time of this event (RFC3339)
-    \item[signup] either "required", "recommended" or "nosignup"
+    \item[beginDate] The starting date and time of this event (RFC3339)
+    \item[endDate] The end date and time of this event (RFC3339)
+    \item[signup] either "required" or "nosignup"
     \item[signups] The amount of attendees
-    \item[availability] The maximal amount of attendees
-    \item[price] The base costs for attending this activity, or total costs  when signed up, 0 if no price.
-    \item[pictures] An array of URLs to pictures for this activity, or an empty array.
+    \item[availability] The maximum amount of attendees, 0 if no maximum
+    \item[price] The base costs for attending this activity, or total costs when signed up, 0 if no price
+    \item[pictures] An array of URLs to pictures for this activity, or an empty array
     \item[description] A description of this event.
     \item[location] The location of this event
-    \item[deadline] The signup deadline, can be null
-    \item[signedup] true if logged in and signed up, false otherwise* OPTIONAL
-    \item[signupAvailable] true if it is possible to sign up* OPTIONAL
+    \item[signupAvailable] true if it is possible to sign up, otherwise false
+    \item[signedUp] true if logged in and signed up, false otherwise* OPTIONAL
     \item[resignAvailable] true if it is possible to sign out, does not depend upon signup state* OPTIONAL
     \item[options] an array of dictionaries representing signup options:
-    	\begin{enumerate}
+	\begin{enumerate}
         \item[id] the ID of this option
         \item[type] either "question", "checkbox" or "selectbox"
         \item[question] the description of this option
         \item[price] additional costs, only present for the checkbox type
         \item[required] true if this question or selectbox requires an answer.
         \item[choices] array of dictionaries representing choices for the selectbox:
-        	\begin{enumerate}
-            	\item[id] the ID of this choice
-                \item[name] the name of this choice
-                \item[price] the additional costs of this choice
+    	\begin{enumerate}
+        	\item[id] the ID of this choice
+            \item[dish] the dish name of this choice
+            \item[restaurant] the restaurant name of this choice
+            \item[price] the additional costs of this choice
             \end{enumerate}
         \end{enumerate}
-        \item[] *Requires an authenticated call and an activity with sign ups. Otherwise this member is not present.
+    \item[] *Requires an authenticated call and an activity with sign ups. Otherwise this member is not present.
 	\end{enumerate}
 \item[Errors] (none)
-\item[Example] 
+\item[Example]
 \begin{lstlisting}
 --> {"method":"getActivityDetailed", "params":[28, "token"]}
 <-- {"result": {
         "id": 28,
-        "title": "Project Evening", 
+        "title": "Project Evening",
         "begin-date": "2014-07-02T018:00:00+02:00",
         "end-date": "2014-07-03T08:00:00+02:00",
         "signup": "required",
@@ -699,10 +873,10 @@ The API exposes different methods. These methods are all grouped into modules. A
         "options": [{
             	"id":123,
                 "type": "selectbox",
-                "question": "what kind of pizza? (Dominos)",
+                "question": "what kind of pizza? (Joe Pizza)",
                 "required": true,
-                "choices": [{"id":87, "name": "Hawaii", "price":6.0},
-                    {"id":88, "name": "Salami", "price":7.0}]
+                "choices": [{"id":87, "dish": "Hawaii", "restaurant": "Joe Pizza", "price":6.0},
+                    {"id":88, "dish": "Salami", "restaurant": "Joe Pizza", "price":7.0}]
             },{
             	"id":124,
                 "type": "checkbox",
@@ -718,40 +892,63 @@ The API exposes different methods. These methods are all grouped into modules. A
 \end{lstlisting}
 \end{enumerate}
 
-\clearpage
 
+\clearpage
 \subsection{getLatestActivitiesWithPictures}
 \begin{enumerate}
 \item[Method] getLatestActivitiesWithPictures
-\item[Description] Retrieves a list of most recent activities that have pictures
+\item[Description] Retrieves a list of most recent activities that have pictures.
+\item[Authentication] OPTIONAL
 \item[Parameters] This method accepts the following parameters:
-	\begin{enumerate}
-		\item[Amount] The amount of activities
-        \item[Token] An authentication token, can be null or omitted, OPTIONAL
+\begin{enumerate}
+	\item[amount] The amount of activities
     \end{enumerate}
-\item[Returns] See getActivityStream
+\item[Returns] An array of dictionaries containing the following fields:
+\begin{enumerate}
+    \item[beginDate] The starting date and time of this event (RFC3339)
+    \item[thumbnail] The thumbnail representing the collection of pictures
+    \item[endDate] The end date and time of this event (RFC3339)
+    \item[title] The title of this item
+    \item[location] The location of this event
+    \item[source] The provider of this activity
+    \item[pictures] An array of URLs to pictures for this activity, or an empty array
+    \item[id] The identifier for this news item
+    \item[url] The URL for this activity
+    \end{enumerate}
 \item[Errors] (none)
 \item[Example]
 \begin{lstlisting}
---> {"method":"getLatestActivitiesWithPictures", "params":[50, "token"]}
+--> {"method":"getLatestActivitiesWithPictures", "params":[50]}
+<-- {"result": [{
+        "id": 28,
+        "title": "Project Evening",
+        "beginDate": "2014-07-02T018:00:00+02:00",
+        "endDate": "2014-07-03T08:00:00+02:00",
+        "location": "Carre 2K",
+        "source": "inter-actief",
+        "url": "/activiteiten/28/",
+        "thumbnail": ""
+        "pictures": []
+    }, {...}, {...}]}
 \end{lstlisting}
 \end{enumerate}
 
 
+\clearpage
 \subsection{getUpcomingActivities}
 \begin{enumerate}
 \item[Method] getUpcomingActivities
 \item[Description] Retrieves a list of upcoming activities, nearest first
+\item[Authentication] OPTIONAL
 \item[Parameters] This method accepts the following parameters:
-	\begin{enumerate}
-		\item[Amount] The amount of activities 
-        \item[Token] An authentication token, can be null or omitted, OPTIONAL
+\begin{enumerate}
+	\item[amount] The amount of activities
     \end{enumerate}
 \item[Returns] See getActivityStream
 \item[Errors] (none)
 \item[Example]
 \begin{lstlisting}
---> {"method":"getUpcomingActivities", "params":[50, "token"]}
+--> {"method":"getUpcomingActivities", "params":[50]}
 \end{lstlisting}
 \end{enumerate}
 
@@ -761,30 +958,29 @@ The API exposes different methods. These methods are all grouped into modules. A
 \begin{enumerate}
 \item[Method] activitySignup
 \item[Description] Marks the current user as attendee to an activity
+\item[Authentication] REQUIRED
 \item[Parameters] This method accepts the following parameters:
+\begin{enumerate}
+	\item[id] The ID of the activity
+    \item[price] The calculated costs, used for consistency checks (decimal)
+    \item[options] An array of dictionaries representing the selected options. Unanswered options should be omitted. All options with the "required" attribute MUST be present:
 	\begin{enumerate}
-		\item[id] The ID of the activity
-        \item[price] The calculated costs, used for consistency checks (decimal)
-        \item[options] An array of dictionaries representing the selected options. Unanswered options should be omitted. All options with the "required" attribute MUST be present:
-        	\begin{enumerate}
-            	\item[id] The ID of the option
-                \item[value] The value of the option; A string for a "question", boolean for "checkbox", integer for "selectbox".
-            \end{enumerate}
-        \item[token] An authentication token. REQUIRED!
+    	\item[id] The ID of the option
+        \item[value] The value of the option; A string for a "question", boolean for "checkbox", integer for "selectbox".
+        \end{enumerate}
     \end{enumerate}
-\item[Returns] null if everything went ok, or an error.
-\item[Errors] 
+\item[Returns] true if successfully signed up, otherwise an error
+\item[Errors]
 	NotLoggedInError: Invalid or no authentication token received \\
 	SignupError: User could not be signed up. See the error message for more details. \\
     MissingOptionError: Occurs when not all required options were present.
 \item[Example]
 \begin{lstlisting}
 --> {"method":"activitySignup", "params":[
-        28, 
+        28,
         56.0,
-        [{"id":123, "value":87}, {"id":125, "value":"Wortel"}],
-        "token"]}
-<-- {"result":null}
+        [{"id":123, "value":87}, {"id":125, "value":"Wortel"}]]}
+<-- {"result": true}
 \end{lstlisting}
 \end{enumerate}
 
@@ -793,20 +989,20 @@ The API exposes different methods. These methods are all grouped into modules. A
 \begin{enumerate}
 \item[Method] activityRevokeSignup
 \item[Description] Unmarks the current user as an attendee to an activity
+\item[Authentication] REQUIRED
 \item[Parameters] This method accepts the following parameters:
-	\begin{enumerate}
-		\item[id] The ID of the activity
-        \item[token] An authentication token. REQUIRED!
+\begin{enumerate}
+	\item[id] The ID of the activity
     \end{enumerate}
-\item[Returns] null if everything went ok, or an error.
-\item[Errors] 
+\item[Returns] true if successfully revoked, otherwise an error
+\item[Errors]
 	NotLoggedInError: Invalid or no authentication token received \\
 	SignupError: User could not be signed up. See the error message for more details. \\
     MissingOptionError: Occurs when not all required options were present.
 \item[Example]
 \begin{lstlisting}
---> {"method":"activityRevokeSignup", "params":[28, "token"]}
-<-- {"result":null}
+--> {"method":"activityRevokeSignup", "params":[28]}
+<-- {"result": true}
 \end{lstlisting}
 \end{enumerate}
 
