@@ -70,6 +70,7 @@
   \vhEntry{0.7}{2016/11/30}{boerpb}{added listing of additional return properties of getActivityStream}
   \vhEntry{0.8}{2016/12/14}{boerpb}{authentication and preview mode descriptions revised}
   \vhEntry{0.9}{2016/12/14}{boerpb}{person and push module}
+  \vhEntry{1.0}{2016/12/17}{boerpb}{education module, transaction module, naming consistency in company module, localization, authentication scopes}
 \end{versionhistory}
 
 \tableofcontents
@@ -97,8 +98,14 @@ https://staging.inter-actief.utwente.nl/api/
 \end{lstlisting}
 Please note that the trailing slash is required.
 
-\clearpage
+\section{Localization}
+As of this version of the API, two languages are supported: Dutch and English. Most data can be translated to either one of these languages, if requested properly.\\
+In order to receive localized responses, the Accept-Language HTTP header should be set in accordance with RFC5646, for example:
+\begin{lstlisting}
+Accept-Language: nl-NL
+\end{lstlisting}
 
+\clearpage
 \section{JSON-RPC Request}
 In order to execute a remote procedure, you must send an HTTP POST request, containing a json dictionary in compliance to the JSON-RPC 2.0 specification\cite{jsonrpc}. This implies that each request dictionary must at least contain the following keys:
 
@@ -139,6 +146,19 @@ When used, an authentication token MUST be included in the HTTP Authorization he
 Bearer some.long.auth.token!%&...
 \end{lstlisting}
 
+\subsection{Scopes}
+After using the getAuthToken method, which can be found in \autoref{m:getAuthToken}, the token returned will automatically be assigned all available scopes.\\
+The following scopes currently exist within the API:
+\begin{enumerate}
+\item[account] This scope is required to get access to personal data, such as name and student number.
+\item[signup] This scope is required to (de-)register for activities.
+\item[transaction] This scope is required for transactions, mandates, RFID-cards and direct debits.
+\item[education] This scope allows for the creation and reading of educational complaints.
+\end{enumerate}
+OAuth applications will have to request each of these scopes individually. More information about OAuth can be found in \autoref{subsec:oauth}.
+
+\subsection{OAuth}\label{subsec:oauth}
+To be added.
 
 \chapter{Methods}
 The API exposes different methods. These methods are all grouped into modules. A module contains the methods involving a specific entity of amelie.
@@ -221,7 +241,7 @@ The API exposes different methods. These methods are all grouped into modules. A
 \begin{enumerate}
 \item[Method] getAuthenticatedApps
 \item[Description] Retrieves the list of authenticated apps for the currently authenticated person.
-\item[Authentication] REQUIRED
+\item[Authentication] REQUIRED (account)
 \item[Parameters] (none)
 \item[Returns] An array of dictionaries containing the following members:
 \begin{enumerate}
@@ -259,7 +279,7 @@ The API exposes different methods. These methods are all grouped into modules. A
 \begin{enumerate}
 \item[Method] getPersonDetails
 \item[Description] Retrieves details of the currently authenticated person.
-\item[Authentication] REQUIRED
+\item[Authentication] REQUIRED (account)
 \item[Parameters] (none)
 \item[Returns] A dictionary containing the following members:
 \begin{enumerate}
@@ -307,7 +327,7 @@ The API exposes different methods. These methods are all grouped into modules. A
 \begin{enumerate}
 \item[Method] getPersonCommittees
 \item[Description] Retrieves a list of committees in which the currently authenticated person has been a member of, or is currently active in.
-\item[Authentication] REQUIRED
+\item[Authentication] REQUIRED (account)
 \item[Parameters] (none)
 \item[Returns] An array of dictionaries containing the following members:
 \begin{enumerate}
@@ -334,7 +354,7 @@ The API exposes different methods. These methods are all grouped into modules. A
 \begin{enumerate}
 \item[Method] getPersonMembership
 \item[Description] Retrieves the active membership details of the currently authenticated person
-\item[Authentication] REQUIRED
+\item[Authentication] REQUIRED (account)
 \item[Parameters] (none)
 \item[Returns] A dictionaries containing the following members:
 \begin{enumerate}
@@ -714,7 +734,7 @@ The API exposes different methods. These methods are all grouped into modules. A
 \item[Returns] An array of dictionaries containing the following members:
 \begin{enumerate}
     \item[id] The identifier for this news item
-    \item[title] The title of this item
+    \item[name] The title of this item
     \item[imageUrl] An URL of a logo for this company
 	\end{enumerate}
 \item[Errors] (none)
@@ -723,7 +743,7 @@ The API exposes different methods. These methods are all grouped into modules. A
 --> {"method":"getCompanyStream", "params":[]}
 <-- {"result": [{
         "id": 28,
-        "title": "University of Twente",
+        "name": "University of Twente",
         "imageUrl": "https://pbs.twimg.com/profile_image.png"
     }]}
 \end{lstlisting}
@@ -817,7 +837,6 @@ The API exposes different methods. These methods are all grouped into modules. A
 \item[Parameters] This method accepts the following parameters:
 \begin{enumerate}
 	\item[id] The id of the requested item
-	\item[token] An authentication token, can be null or omitted, OPTIONAL
     \end{enumerate}
 \item[Returns] A Dictionary containing the following fields:
 \begin{enumerate}
@@ -958,7 +977,7 @@ The API exposes different methods. These methods are all grouped into modules. A
 \begin{enumerate}
 \item[Method] activitySignup
 \item[Description] Marks the current user as attendee to an activity
-\item[Authentication] REQUIRED
+\item[Authentication] REQUIRED (signup)
 \item[Parameters] This method accepts the following parameters:
 \begin{enumerate}
 	\item[id] The ID of the activity
@@ -989,7 +1008,7 @@ The API exposes different methods. These methods are all grouped into modules. A
 \begin{enumerate}
 \item[Method] activityRevokeSignup
 \item[Description] Unmarks the current user as an attendee to an activity
-\item[Authentication] REQUIRED
+\item[Authentication] REQUIRED (signup)
 \item[Parameters] This method accepts the following parameters:
 \begin{enumerate}
 	\item[id] The ID of the activity
@@ -1003,6 +1022,271 @@ The API exposes different methods. These methods are all grouped into modules. A
 \begin{lstlisting}
 --> {"method":"activityRevokeSignup", "params":[28]}
 <-- {"result": true}
+\end{lstlisting}
+\end{enumerate}
+
+
+\clearpage
+\section{Education Module}
+\subsection{getComplaintStream}
+\begin{enumerate}
+\item[Method] getComplaintStream
+\item[Description] Retrieves a list of complaints.
+\item[Authentication] REQUIRED (education)
+\item[Parameters] This method accepts the following parameters:
+\begin{enumerate}
+	\item[begin] The minimal end date, RFC3339 (inclusive)
+    \item[end] The maximal begin date, RFC3339 (exclusive)
+    \end{enumerate}
+\item[Returns] An array of dictionaries containing the following members:
+\begin{enumerate}
+    \item[id] The identifier for this complaint
+    \item[dateTime] The submission date and time of this complaint (RFC3339)
+    \item[type] The type of this complaint
+    \item[summary] The summary of this complaint
+    \item[remark] The content of the complaint
+    \item[supporters] The amount of supporters for this complaint (includes the original reporter)
+    \item[hasSupported] true if the authenticated person has supported this complaint, otherwise false
+    \item[course] The course concerning this complaint, can be null
+    \item[subject] The subject concerning the course of this complaint, can be null
+    \item[year] The first year of the academic year in which the course was given, can be null
+    \item[period] The period of the academic year in which the course was given, can be null
+	\end{enumerate}
+\item[Errors] InvalidParamsError
+\item[Example]
+\begin{lstlisting}
+--> {"method":"getComplaintStream", "params":["2014-07-01T00:00:00+02:00", "2014-07-31T23:59:59+02:00"]}
+<-- {"result": [{
+        "id": 28,
+        "dateTime": "2014-07-02T018:00:00+02:00",
+        "type": "Overig",
+        "summary": "So many bugs, so many...,
+        "remark": "Description of the complaint",
+        "supporters": 42,
+        "hasSupported": false,
+        "course": "Computer Systems",
+        "subject": "Programming",
+        "year": 2016,
+        "period": "K2"
+    }, {...}, {...}]}
+\end{lstlisting}
+\end{enumerate}
+
+
+\clearpage
+\subsection{addComplaintSupport}
+\begin{enumerate}
+\item[Method] addComplaintSupport
+\item[Description] Adds support of the authenticated person to a specific complaint.
+\item[Authentication] REQUIRED (education)
+\item[Parameters] This method accepts the following parameters:
+\begin{enumerate}
+	\item[id] The identifier of any existing complaint
+    \end{enumerate}
+\item[Returns] true if successful, otherwise false
+\item[Errors] (none)
+\item[Example]
+\begin{lstlisting}
+--> {"method":"addComplaintSupport", "params":[42]}
+<-- {"result": true}
+\end{lstlisting}
+\end{enumerate}
+
+\subsection{removeComplaintSupport}
+\begin{enumerate}
+\item[Method] removeComplaintSupport
+\item[Description] Removes support of the authenticated person of a specific complaint.
+\item[Authentication] REQUIRED (education)
+\item[Parameters] This method accepts the following parameters:
+\begin{enumerate}
+	\item[id] The identifier of any existing complaint
+    \end{enumerate}
+\item[Returns] true if successful, otherwise false
+\item[Errors] (none)
+\item[Example]
+\begin{lstlisting}
+--> {"method":"removeComplaintSupport", "params":[42]}
+<-- {"result": true}
+\end{lstlisting}
+\end{enumerate}
+
+
+\clearpage
+\subsection{getComplaintCreationFields}\label{m:getComplaintCreationFields}
+\begin{enumerate}
+\item[Method] getComplaintCreationFields
+\item[Description] Retrieves information regarding the various fields required for creating a new complaint.
+\item[Authentication] REQUIRED (education)
+\item[Parameters] (none)
+\item[Returns] A dictionaries containing the following members:
+\begin{enumerate}
+    \item[types] An array of strings, each being a valid complaint type
+    \item[periods] An array of strings, each being a valid period
+    \item[courses] An array of dictionary objects, each item being a valid course
+    \begin{enumerate}
+        \item[id] The identifier of this course
+        \item[name] The name of this course
+        \item[courseCode] The code of this course
+        \end{enumerate}
+	\end{enumerate}
+\item[Errors] (none)
+\item[Example]
+\begin{lstlisting}
+--> {"method":"getComplaintCreationFields", "params":[]}
+<-- {"result": {
+        "types": ["Nakijken", "Faciliteiten", "Informatie", "Overig"],
+        "periods": ["K1", "K2", "K3", "K4", "S1", "S2"],
+        "courses": [{
+            "id": 42,
+            "name": "Some fancy course name",
+            "courseCode": 201600000
+        }, {...}, {...}]
+    }}
+\end{lstlisting}
+\end{enumerate}
+
+
+\clearpage
+\subsection{createComplaint}
+\begin{enumerate}
+\item[Method] createComplaint
+\item[Description] Creates a new complaint about a specific topic.
+\item[Authentication] REQUIRED (education)
+\item[Parameters] This method accepts the following parameters:
+\begin{enumerate}
+	\item[type] The type of the complaint*
+    \item[courseId] The id of the course concerning this complaint*
+    \item[summary] A short summary of the complaint
+    \item[remark] The description of the complaint
+    \item[public] Boolean value indicating whether to include the complaint in the public listing
+    \item[anonymous] Boolean value indicating whether to restrict reporter identity to the board
+    \item[subject] The subject concerning the course of this complaint
+    \item[year] The first year of the academic year in which the course was given
+    \item[periodId] The period of the academic year in which the course was given*
+    \item[] *Valid values for these members can be requested with the getComplaintCreationFields method found in \autoref{m:getComplaintCreationFields}.
+    \end{enumerate}
+\item[Returns] true if successful, otherwise false
+\item[Errors] InvalidParamsError
+\item[Example]
+\begin{lstlisting}
+--> {"method":"createComplaint", "params":["Overig", 201600000, "summary", "description", true, false, "subject", 2016, "K3"]}
+<-- {"result": true}
+\end{lstlisting}
+\end{enumerate}
+
+
+\clearpage
+\section{Transaction Module}
+\subsection{getRfidCards}
+\begin{enumerate}
+\item[Method] getRfidCards
+\item[Description] Retrieves a list of RFID-cards attributed to the authenticated person.
+\item[Authentication] REQUIRED (transaction)
+\item[Parameters] (none)
+\item[Returns] An array of dictionaries containing the following members:
+\begin{enumerate}
+    \item[isActivated] Boolean value indicating the activation status of this card
+    \item[code] The RFID-code associated with this card
+    \item[type] The type of this card
+	\end{enumerate}
+\item[Errors] (none)
+\item[Example]
+\begin{lstlisting}
+--> {"method":"getRfidCards", "params":[]}
+<-- {"result": [{
+        "isActivated": true,
+        "code": "00,0a:00:00:00",
+        "type": "Mifare 1K (Collegekaart/Gebouwpas)"
+    }, {...}, {...}]}
+\end{lstlisting}
+\end{enumerate}
+
+
+\subsection{getDirectDebits}
+\begin{enumerate}
+\item[Method] getDirectDebits
+\item[Description] Retrieves a list of direct debits associated with the authenticated person.
+\item[Authentication] REQUIRED (transaction)
+\item[Parameters] (none)
+\item[Returns] An array of dictionaries containing the following members:
+\begin{enumerate}
+    \item[date] The date of the direct debit
+    \item[description] A description of the direct debit
+    \item[amount] The amount of money requested by the direct debit
+	\end{enumerate}
+\item[Errors] (none)
+\item[Example]
+\begin{lstlisting}
+--> {"method":"getDirectDebits", "params":[]}
+<-- {"result": [{
+        "date": "2017-02-14",
+        "description": "A very informative description",
+        "amount": "12.00"
+    }, {...}, {...}]}
+\end{lstlisting}
+\end{enumerate}
+
+
+\clearpage
+\subsection{getMandates}
+\begin{enumerate}
+\item[Method] getMandates
+\item[Description] Retrieves a list of mandates associated with the authenticated person.
+\item[Authentication] REQUIRED (transaction)
+\item[Parameters] (none)
+\item[Returns] An array of dictionaries containing the following members:
+\begin{enumerate}
+    \item[accountHolder] The name of the person holding the account
+    \item[reference] The reference id of the mandate
+    \item[beginDate] The start date of the mandate, either ISO format or "old"
+    \item[endDate] The end date of the mandate, can be null
+    \item[iban] The IBAN associated with the mandate
+    \item[type] The type of mandate
+	\end{enumerate}
+\item[Errors] (none)
+\item[Example]
+\begin{lstlisting}
+--> {"method":"getMandates", "params":[]}
+<-- {"result": [{
+        "accountHolder": "D. D. Duck",
+        "endDate": null,
+        "reference": "IA-MNDT-00000000",
+        "type": "Consumpties, activiteiten en overige",
+        "iban": "XX00XXXX0000000000",
+        "beginDate": "2017-01-26"
+    }, {...}, {...}]}
+\end{lstlisting}
+\end{enumerate}
+
+
+\clearpage
+\subsection{getTransactions}
+\begin{enumerate}
+\item[Method] getTransactions
+\item[Description] Retrieves a list of transactions associated with the authenticated person.
+\item[Authentication] REQUIRED (transaction)
+\item[Parameters] This method accepts the following parameters:
+\begin{enumerate}
+	\item[begin] The minimal end date, RFC3339 (inclusive)
+    \item[end] The maximal begin date, RFC3339 (exclusive)
+    \end{enumerate}
+\item[Returns] An array of dictionaries containing the following members:
+\begin{enumerate}
+    \item[person] The name of the person who performed the transaction
+    \item[description] The description of the transaction
+    \item[date] The date of the transaction (RFC3339)
+    \item[amount] The amount of money reduced by the transaction, can be negative
+	\end{enumerate}
+\item[Errors] InvalidParamsError
+\item[Example]
+\begin{lstlisting}
+--> {"method":"getMandates", "params":["2014-07-01T00:00:00+02:00", "2014-07-31T23:59:59+02:00"]}
+<-- {"result": [{
+        "person": "D. D. Duck",
+        "description": "A very bright description",
+        "date": "2014-07-02T018:00:00+02:00",
+        "amount": "5.00"
+    }, {...}, {...}]}
 \end{lstlisting}
 \end{enumerate}
 
