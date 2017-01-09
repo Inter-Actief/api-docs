@@ -71,7 +71,7 @@
   \vhEntry{0.8}{2016/12/14}{boerpb}{authentication and preview mode descriptions revised}
   \vhEntry{0.9}{2016/12/14}{boerpb}{person and push module}
   \vhEntry{1.0}{2016/12/17}{boerpb}{education module, transaction module, naming consistency in company module, localization, authentication scopes}
-  \vhEntry{1.1}{2017/01/09}{boerpb}{markdown support for getNewsDetailed}
+  \vhEntry{1.1}{2017/01/09}{boerpb}{markdown support for getNewsDetailed, OAuth implementation documentation}
 \end{versionhistory}
 
 \tableofcontents
@@ -159,8 +159,16 @@ The following scopes currently exist within the API:
 OAuth applications will have to request each of these scopes individually. More information about OAuth can be found in \autoref{subsec:oauth}.
 
 \subsection{OAuth}\label{subsec:oauth}
-To be added.
+In order to use OAuth with the Inter-Actief API in your application, you will first need to register an OAuth application to obtain a client\_id. This can be done by sending an email describing your request to \href{mailto:board@inter-actief.net}{board@inter-actief.net}. Make sure to mention your application name and redirect uri(s). More information might be requested if required.\\\\
+When you have obtained your client\_id, you will need to use the following endpoint to receive your token:
+\begin{lstlisting}
+https://www.inter-actief.utwente.nl/o/authorize/?client_id={client_id}
+&scope={scopes}&response_type=token
+\end{lstlisting}
+Replace \{client\_id\} with your client\_id and \{scopes\} with one or more scopes separated by the '+' character.
 
+
+\clearpage
 \chapter{Methods}
 The API exposes different methods. These methods are all grouped into modules. A module contains the methods involving a specific entity of amelie.
 
@@ -495,7 +503,8 @@ The API exposes different methods. These methods are all grouped into modules. A
         "date": "2014-07-07T18:56:50+00:00",
         "source": "StudyTour",
         "breakout": false,
-        "author": "StudyTour"
+        "author": "StudyTour",
+        "introduction": null,
         "content": "<html><!--html contents--></html>"
     }}
 \end{lstlisting}
@@ -1285,7 +1294,7 @@ The API exposes different methods. These methods are all grouped into modules. A
 \item[Example]
 \begin{lstlisting}
 --> {"method":"getTransactions", "params":["2014-07-01T00:00:00+02:00", "2014-07-31T23:59:59+02:00"]}
-<-- {"result": [{
+<-- {"result": [{a
         "person": "D. D. Duck",
         "description": "A very bright description",
         "date": "2014-07-02T018:00:00+02:00",
