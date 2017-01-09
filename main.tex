@@ -71,6 +71,7 @@
   \vhEntry{0.8}{2016/12/14}{boerpb}{authentication and preview mode descriptions revised}
   \vhEntry{0.9}{2016/12/14}{boerpb}{person and push module}
   \vhEntry{1.0}{2016/12/17}{boerpb}{education module, transaction module, naming consistency in company module, localization, authentication scopes}
+  \vhEntry{1.1}{2017/01/09}{boerpb}{markdown support for getNewsDetailed}
 \end{versionhistory}
 
 \tableofcontents
@@ -466,6 +467,7 @@ The API exposes different methods. These methods are all grouped into modules. A
 \begin{enumerate}
 	\item[source] The source of the requested item
 	\item[id] The id of the requested item
+    \item[render\_markdown] A boolean that indicates whether you want to render markdown in the introduction and content to HTML, OPTIONAL, default false.
     \end{enumerate}
 \item[Returns] A Dictionary containing the following fields:
 \begin{enumerate}
@@ -477,7 +479,9 @@ The API exposes different methods. These methods are all grouped into modules. A
     \item[source] The source of this item
     \item[breakout] true if this item contains its own header, OPTIONAL
     \item[author] the Author of this news item
-    \item[content] The HTML content of this news item
+    \item[introduction] The introduction of this news item*
+    \item[content] The content of this news item*
+    \item[] *The introduction of any news item is included in the HTML content, thus will only be returned separately if the renderMarkdown parameter is set to TRUE. Otherwise this property is null.
 	\end{enumerate}
 \item[Errors] (none)
 \item[Example]
