@@ -64,7 +64,7 @@
   \vhEntry{0.2}{2014/07/14}{vollenbrockjhj}{news, narrowcast, and committee module}
   \vhEntry{0.3}{2014/07/14}{vollenbrockjhj}{company module and activity module}
   \vhEntry{0.4}{2014/07/15}{vollenbrockjhj}{typography, layout, document style}
-  \vhEntry{0.5}{2016/11/20}{albertskja}{Added Narrowcast.getHistoricActivitiesWithPictures and added optional
+  \vhEntry{0.5}{2016/11/20}{albertskja}{added Narrowcast.getHistoricActivitiesWithPictures and added optional
   parameter to getNews}
   \vhEntry{0.6}{2016/11/30}{boerpb}{property naming convention, restaurant and dish activity option properties}
   \vhEntry{0.7}{2016/11/30}{boerpb}{added listing of additional return properties of getActivityStream}
@@ -72,6 +72,7 @@
   \vhEntry{0.9}{2016/12/14}{boerpb}{person and push module}
   \vhEntry{1.0}{2016/12/17}{boerpb}{education module, transaction module, naming consistency in company module, localization, authentication scopes}
   \vhEntry{1.1}{2017/01/09}{boerpb}{markdown support for getNewsDetailed, OAuth implementation documentation}
+  \vhEntry{1.2}{2017/02/19}{boerpb}{added setLanguagePreference to person, reworked activities, moved getDeviceId to push, added deprecation warning to getAuthToken}
 \end{versionhistory}
 
 \tableofcontents
@@ -173,22 +174,8 @@ Replace \{client\_id\} with your client\_id and \{scopes\} with one or more scop
 The API exposes different methods. These methods are all grouped into modules. A module contains the methods involving a specific entity of amelie.
 
 \section{Authentication Module}\label{sec:authmodule}
-\subsection{getDeviceId}\label{m:getDeviceId}
-\begin{enumerate}
-\item[Method] getDeviceId
-\item[Description] Requests a new deviceId. Your application SHOULD call this method only once in your apps lifetime, just after its first start, and store the result for further use.
-\item[Authentication] (none)
-\item[Parameters] (none)
-\item[Returns] A string containing a newly assigned deviceId
-\item[Errors] (none)
-\item[Example]
-\begin{lstlisting}
---> {"method":"getDeviceId", "params":[]}
-<-- {"result": "QphLtj#z%Itaceny"}
-\end{lstlisting}
-\end{enumerate}
-
-\subsection{getAuthToken}\label{m:getAuthToken}
+\subsection{getAuthToken*}\label{m:getAuthToken}
+*This method will be phased out as soon as possible. Please be aware that use of this method is not recommended. Instead, you should use OAuth2 to authenticate with the Inter-Actief API.
 \begin{enumerate}
 \item[Method] getAuthToken
 \item[Description] Attempts to log in and returns an authentication token.
@@ -401,9 +388,44 @@ The API exposes different methods. These methods are all grouped into modules. A
 \end{lstlisting}
 \end{enumerate}
 
+\clearpage
+\subsection{setLanguagePreference}
+\begin{enumerate}
+\item[Method] setLanguagePreference
+\item[Description] Sets the language preference for this user across all Inter-Actief services.
+\item[Authentication] REQUIRED (account)
+\item[Parameters] This method accepts the following parameters:
+\begin{enumerate}
+    \item[language] The preferred language (either "nl" or "en")
+    \end{enumerate}
+\item[Returns] true
+\item[Errors] InvalidParamsError
+\item[Example]
+\begin{lstlisting}
+--> {"method":"setLanguagePreference", "params":["en"]}
+<-- {"result": true}
+\end{lstlisting}
+\end{enumerate}
+
 
 \clearpage
 \section{Push Module}\label{sec:pushmodule}
+\subsection{getDeviceId}\label{m:getDeviceId}
+\begin{enumerate}
+\item[Method] getDeviceId
+\item[Description] Requests a new deviceId. Your application SHOULD call this method only once in your apps lifetime, just after its first start, and store the result for further use.
+\item[Authentication] (none)
+\item[Parameters] (none)
+\item[Returns] A string containing a newly assigned deviceId
+\item[Errors] (none)
+\item[Example]
+\begin{lstlisting}
+--> {"method":"getDeviceId", "params":[]}
+<-- {"result": "QphLtj#z%Itaceny"}
+\end{lstlisting}
+\end{enumerate}
+
+
 \subsection{storePushToken}
 \begin{enumerate}
 \item[Method] storePushToken
@@ -791,10 +813,10 @@ The API exposes different methods. These methods are all grouped into modules. A
 
 \clearpage
 \section{Activity Module}
-\subsection{getActivityStream}
+\subsection{getActivityStream}\label{m:getActivityStream}
 \begin{enumerate}
 \item[Method] getActivityStream
-\item[Description] Retrieves a list of activities.
+\item[Description] Retrieves a combined list of regular, educational and external activities.
 \item[Authentication] OPTIONAL
 \item[Parameters] This method accepts the following parameters:
 \begin{enumerate}
@@ -807,101 +829,135 @@ The API exposes different methods. These methods are all grouped into modules. A
     \item[title] The title of this activity
     \item[beginDate] The starting date and time of this activity (RFC3339)
     \item[endDate] The end date and time of this activity (RFC3339)
-    \item[signup] either "required" or "nosignup"
-    \item[signedUp] true if logged in and signed up, otherwise false
-    \item[imageUrl] The URL of the activity image or icon, otherwise null
     \item[location] The location of this activity
-    \item[source] The provider of this activity
-    \item[signupAvailable] true if it is possible to sign up, otherwise false
-    \item[signupStart] The date and time when registration opens (RFC3339), otherwise null
-    \item[signupStop] The date and time when registration closes (RFC3339), otherwise null
+    \item[source] The type of this activity (either "regular", "educational" or "external")
     \item[url] The URL for this activity
+    \item[organizer] The organizer of this activity
 	\end{enumerate}
-\item[Errors] (none)
-\clearpage
+\item[Errors] InvalidParamsError
 \item[Example]
 \begin{lstlisting}
---> {"method":"getActivityStream", "params":["2014-07-01T00:00:00+02:00", "2014-07-31T23:59:59+02:00", "token"]}
+--> {"method":"getActivityStream", "params":["2014-07-01T00:00:00+02:00", "2014-07-31T23:59:59+02:00"]}
 <-- {"result": [{
         "id": 28,
         "title": "Project Evening",
         "beginDate": "2014-07-02T018:00:00+02:00",
         "endDate": "2014-07-03T08:00:00+02:00",
-        "signup": "required",
-        "signedUp": false,
-        "imageUrl": "https://media.ia.utwente.nl/amelie/activiteiten/icoon/logo.png",
         "location": "Carre 2K",
-        "source": "inter-actief",
-        "signupAvailable": true,
-        "signupStart": "2014-07-02T018:00:00+02:00",
-        "signupStop": "2014-07-02T018:00:00+02:00",
-        "url": "/activiteiten/28/"
+        "source": "regular",
+        "url": "/activiteiten/28/",
+        "organizer": "Bestuur"
     }, {...}, {...}]}
 \end{lstlisting}
 \end{enumerate}
 
-\clearpage
 
-\subsection{getActivityDetailed}
+\clearpage
+\subsection{getActivityDetailed}\label{m:getActivityDetailed}
 \begin{enumerate}
 \item[Method] getActivityDetailed
-\item[Description] Retrieves details of an event, including its signup options.
+\item[Description] Retrieves details of an event, including its signup options if available
 \item[Authentication] OPTIONAL
 \item[Parameters] This method accepts the following parameters:
 \begin{enumerate}
 	\item[id] The id of the requested item
     \end{enumerate}
-\item[Returns] A Dictionary containing the following fields:
+\item[Returns] All fields returned by getActivityStream (\autoref{m:getActivityStream}) additional to:
 \begin{enumerate}
-    \item[id] The identifier for this news item
-    \item[title] The title of this item
-    \item[beginDate] The starting date and time of this event (RFC3339)
-    \item[endDate] The end date and time of this event (RFC3339)
-    \item[signup] either "required" or "nosignup"
-    \item[signups] The amount of attendees
+    \item[organizer] The organizer of this activity
+    \item[description] The description of this activity
+    \end{enumerate}
+\item[] \textit{If the source of the activity equals "regular", additional fields will be returned.\\Please refer to: \autoref{m:getActivityDetailedRegular}}
+
+\item[Errors]
+    NotLoggedInError: Invalid or no authentication token received \\
+    DoesNotExistError: The object requested does not exist
+\item[Example]
+\begin{lstlisting}
+--> {"method":"getActivityDetailed", "params":[28]}
+<-- {"result": {
+        ...,
+        "organizer": "Bestuur",
+        "description": "Super cool awesome activity with pizza!"
+    }}
+\end{lstlisting}
+\end{enumerate}
+
+
+\clearpage
+\subsection{getActivityDetailed (source equals "regular")}\label{m:getActivityDetailedRegular}
+\begin{enumerate}
+\item[Method] getActivityDetailed
+\item[Description] Retrieves details of an event, including its signup options if available
+\item[Authentication] OPTIONAL
+\item[Parameters] This method accepts the following parameters:
+\begin{enumerate}
+    \item[id] The id of the requested item
+    \end{enumerate}
+\item[Returns] All fields returned by getActivityDetailed (\autoref{m:getActivityDetailed}) additional to:
+\begin{enumerate}
+    \item[imageUrl] An URL to the graphic attached to this activity, can be null
+    \item[signupRequired] true if signup is required, otherwise false
     \item[availability] The maximum amount of attendees, 0 if no maximum
-    \item[price] The base costs for attending this activity, or total costs when signed up, 0 if no price
-    \item[pictures] An array of URLs to pictures for this activity, or an empty array
-    \item[description] A description of this event.
-    \item[location] The location of this event
+    \item[signupStart] The time at which enrollment opens (RFC3339)
+    \item[signupStop] The time at which enrollment closes (RFC3339)
+    \item[signedUp] true if logged in and signed up, otherwise false
+    \item[resignAvailable] true if it is possible to sign out, otherwise false
     \item[signupAvailable] true if it is possible to sign up, otherwise false
-    \item[signedUp] true if logged in and signed up, false otherwise* OPTIONAL
-    \item[resignAvailable] true if it is possible to sign out, does not depend upon signup state* OPTIONAL
+    \item[price] The base costs for enrollment, or total costs when signed up, 0 if no price
+    \item[pictures] An array of URLs to pictures for this activity, or an empty array
+    \item[thumbnails] A dictionary with the following properties:
+    \begin{enumerate}
+        \item[small] An URL to the \textit{small} thumbnail, can be null
+        \item[medium] An URL to the \textit{medium} thumbnail, can be null
+        \item[large] An URL to the \textit{large} thumbnail, can be null
+        \item[original] An URL to the \textit{original} thumbnail, can be null
+        \end{enumerate}
+
     \item[options] an array of dictionaries representing signup options:
-	\begin{enumerate}
+    \begin{enumerate}
         \item[id] the ID of this option
         \item[type] either "question", "checkbox" or "selectbox"
         \item[question] the description of this option
         \item[price] additional costs, only present for the checkbox type
         \item[required] true if this question or selectbox requires an answer.
         \item[choices] array of dictionaries representing choices for the selectbox:
-    	\begin{enumerate}
-        	\item[id] the ID of this choice
+        \begin{enumerate}
+            \item[id] the ID of this choice
             \item[dish] the dish name of this choice
             \item[restaurant] the restaurant name of this choice
             \item[price] the additional costs of this choice
             \end{enumerate}
         \end{enumerate}
-    \item[] *Requires an authenticated call and an activity with sign ups. Otherwise this member is not present.
-	\end{enumerate}
-\item[Errors] (none)
-\item[Example]
+
+    \end{enumerate}
+\item[Errors] All errors returned by getActivityDetailed (\autoref{m:getActivityDetailed})
+\item[Example] Please refer to page \pageref{example:getActivityDetailedRegular}
+\end{enumerate}
+
+
+\clearpage
+\label{example:getActivityDetailedRegular}
 \begin{lstlisting}
---> {"method":"getActivityDetailed", "params":[28, "token"]}
+--> {"method":"getActivityDetailed", "params":[28]}
 <-- {"result": {
-        "id": 28,
-        "title": "Project Evening",
-        "begin-date": "2014-07-02T018:00:00+02:00",
-        "end-date": "2014-07-03T08:00:00+02:00",
-        "signup": "required",
-        "signups": 12,
+        ...,
+        "imageUrl": "https://pic0",
+        "signupRequired": true,
         "availability": 50,
+        "signupStart": "2014-07-02T018:00:00+02:00",
+        "signupStop": "2014-07-02T018:00:00+02:00",
+        "signedUp": false,
+        "resignAvailable": true,
+        "signupAvailable": true,
         "price": 50.00,
-        "pictures": ["http://pic1", "http://pic2"],
-        "description": "Super cool awesome activity with pizza!",
-        "location": "Educafe",
-        "deadline": "2014-07-02T014:00:00+02:00",
-        "signedup": false,
+        "pictures": ["https://pic1", "https://pic2"],
+        "thumbnails": {
+            "small": "https://pic1/small/",
+            "medium": "https://pic1/medium/",
+            "large": "https://pic1/large/",
+            "original": "https://pic1/original/"
+        },
         "options": [{
             	"id":123,
                 "type": "selectbox",
@@ -922,8 +978,6 @@ The API exposes different methods. These methods are all grouped into modules. A
             },{...}]
     }}
 \end{lstlisting}
-\end{enumerate}
-
 
 \clearpage
 \subsection{getLatestActivitiesWithPictures}
@@ -935,33 +989,30 @@ The API exposes different methods. These methods are all grouped into modules. A
 \begin{enumerate}
 	\item[amount] The amount of activities
     \end{enumerate}
-\item[Returns] An array of dictionaries containing the following fields:
+\item[Returns] All fields returned by getActivityStream (\ref{m:getActivityStream}) additional to:
 \begin{enumerate}
-    \item[beginDate] The starting date and time of this event (RFC3339)
-    \item[thumbnail] The thumbnail representing the collection of pictures
-    \item[endDate] The end date and time of this event (RFC3339)
-    \item[title] The title of this item
-    \item[location] The location of this event
-    \item[source] The provider of this activity
     \item[pictures] An array of URLs to pictures for this activity, or an empty array
-    \item[id] The identifier for this news item
-    \item[url] The URL for this activity
+    \item[thumbnails] A dictionary with the following properties:
+    \begin{enumerate}
+        \item[small] An URL to the \textit{small} thumbnail, can be null
+        \item[medium] An URL to the \textit{medium} thumbnail, can be null
+        \item[large] An URL to the \textit{large} thumbnail, can be null
+        \item[original] An URL to the \textit{original} thumbnail, can be null
+        \end{enumerate}
     \end{enumerate}
 \item[Errors] (none)
 \item[Example]
 \begin{lstlisting}
 --> {"method":"getLatestActivitiesWithPictures", "params":[50]}
 <-- {"result": [{
-        "id": 28,
-        "title": "Project Evening",
-        "beginDate": "2014-07-02T018:00:00+02:00",
-        "endDate": "2014-07-03T08:00:00+02:00",
-        "location": "Carre 2K",
-        "source": "inter-actief",
-        "url": "/activiteiten/28/",
-        "thumbnail": ""
-        "pictures": []
-    }, {...}, {...}]}
+    ...,
+    "pictures": ["https://pic1", "https://pic2"],
+    "thumbnails": {
+        "small": "https://pic1/small/",
+        "medium": "https://pic1/medium/",
+        "large": "https://pic1/large/",
+        "original": "https://pic1/original/"
+    }}, {...}, {...}]}
 \end{lstlisting}
 \end{enumerate}
 
@@ -976,7 +1027,7 @@ The API exposes different methods. These methods are all grouped into modules. A
 \begin{enumerate}
 	\item[amount] The amount of activities
     \end{enumerate}
-\item[Returns] See getActivityStream
+\item[Returns] All fields returned by getActivityStream (\ref{m:getActivityStream})
 \item[Errors] (none)
 \item[Example]
 \begin{lstlisting}
