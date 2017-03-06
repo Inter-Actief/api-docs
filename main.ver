@@ -1,0 +1,54 @@
+\begin {longtable}{@{}ll>{\hsize =\vhAuthorColWidth }X>{\hsize =\vhChangeColWidth }X@{}}
+\textbf {\vhversionname }
+ & \textbf {\vhdatename }
+ & \textbf {\vhauthorname }
+ & \textbf {\vhchangename }\\[1ex]
+0.1
+ & 2014/07/13
+ & \listset {vollenbrockjhj}
+ & basic structure, auth module, news module\\
+0.2
+ & 2014/07/14
+ & \listset {vollenbrockjhj}
+ & news, narrowcast, and committee module\\
+0.3
+ & 2014/07/14
+ & \listset {vollenbrockjhj}
+ & company module and activity module\\
+0.4
+ & 2014/07/15
+ & \listset {vollenbrockjhj}
+ & typography, layout, document style\\
+0.5
+ & 2016/11/20
+ & \listset {albertskja}
+ & added Narrowcast.getHistoricActivitiesWithPictures and added optional parameter to getNews\\
+0.6
+ & 2016/11/30
+ & \listset {boerpb}
+ & property naming convention, restaurant and dish activity option properties\\
+0.7
+ & 2016/11/30
+ & \listset {boerpb}
+ & added listing of additional return properties of getActivityStream\\
+0.8
+ & 2016/12/14
+ & \listset {boerpb}
+ & authentication and preview mode descriptions revised\\
+0.9
+ & 2016/12/14
+ & \listset {boerpb}
+ & person and push module\\
+1.0
+ & 2016/12/17
+ & \listset {boerpb}
+ & education module, transaction module, naming consistency in company module, localization, authentication scopes\\
+1.1
+ & 2017/01/09
+ & \listset {boerpb}
+ & markdown support for getNewsDetailed, OAuth implementation documentation\\
+1.2
+ & 2017/03/07
+ & \listset {boerpb}
+ & added setLanguagePreference to person, reworked activities, moved getDeviceId to push, added deprecation warning to getAuthToken\\
+\end {longtable}

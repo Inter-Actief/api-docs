@@ -72,7 +72,7 @@
   \vhEntry{0.9}{2016/12/14}{boerpb}{person and push module}
   \vhEntry{1.0}{2016/12/17}{boerpb}{education module, transaction module, naming consistency in company module, localization, authentication scopes}
   \vhEntry{1.1}{2017/01/09}{boerpb}{markdown support for getNewsDetailed, OAuth implementation documentation}
-  \vhEntry{1.2}{2017/02/19}{boerpb}{added setLanguagePreference to person, reworked activities, moved getDeviceId to push, added deprecation warning to getAuthToken}
+  \vhEntry{1.2}{2017/03/07}{boerpb}{added setLanguagePreference to person, reworked activities, moved getDeviceId to push, added deprecation warning to getAuthToken}
 \end{versionhistory}
 
 \tableofcontents
@@ -89,7 +89,7 @@ The current version of the API (codename lennart) can be reached in both product
 \subsection{Production Environment}
 To access the API in the production environment, the following endpoint has to be used:
 \begin{lstlisting}
-https://api.ia.utwente.nl/app/lennart/
+https://www.inter-actief.utwente.nl/api/
 \end{lstlisting}
 Please note that the trailing slash is required.
 
@@ -175,7 +175,7 @@ The API exposes different methods. These methods are all grouped into modules. A
 
 \section{Authentication Module}\label{sec:authmodule}
 \subsection{getAuthToken*}\label{m:getAuthToken}
-*This method will be phased out as soon as possible. Please be aware that use of this method is not recommended. Instead, you should use OAuth2 to authenticate with the Inter-Actief API.
+*This method will be phased out as soon as possible. You SHOULD NOT use this method. Instead, it is RECOMMENDED to use OAuth2 to authenticate with the Inter-Actief API.
 \begin{enumerate}
 \item[Method] getAuthToken
 \item[Description] Attempts to log in and returns an authentication token.
@@ -201,15 +201,12 @@ The API exposes different methods. These methods are all grouped into modules. A
 \item[Method] checkAuthToken
 \item[Description] Checks if an auth token is still valid. It is recommended to do this after resuming your app, to see if the token was revoked.
 \item[Authentication] (none)
-\item[Parameters] This method accepts the following parameters:
-\begin{enumerate}
-    \item[token] The authentication token, obtained with getAuthToken
-    \end{enumerate}
+\item[Parameters] (none)
 \item[Returns] true if the token was valid and an user is attached, false otherwise.
 \item[Errors] (none)
 \item[Example]
 \begin{lstlisting}
---> {"method":"checkAuthToken", "params":["some.long.auth.token!%&..."]}
+--> {"method":"checkAuthToken", "params":[]}
 <-- {"result": true}
 \end{lstlisting}
 \end{enumerate}
@@ -219,15 +216,12 @@ The API exposes different methods. These methods are all grouped into modules. A
 \item[Method] revokeAuthToken
 \item[Description] Revokes an authentication token.
 \item[Authentication] (none)
-\item[Parameters] This method accepts the following parameters:
-\begin{enumerate}
-    \item[token] The authentication token, obtained with getAuthToken
-    \end{enumerate}
+\item[Parameters] (none)
 \item[Returns] true if the token was successfully revoked, null otherwise.
 \item[Errors] NotLoggedInError: If the token was not recognized or already revoked.
 \item[Example]
 \begin{lstlisting}
---> {"method":"revokeAuthToken", "params":["some.long.auth.token!%&..."]}
+--> {"method":"revokeAuthToken", "params":[]}
 <-- {"result": true}
 \end{lstlisting}
 \end{enumerate}
@@ -296,7 +290,10 @@ The API exposes different methods. These methods are all grouped into modules. A
     \item[imageUrl] The profile image URL for the authenticated user
     \end{enumerate}
 \item[Errors] NotLoggedInError: If the token was not recognized or already revoked.
-\item[Example]
+\item[Example] Please refer to page \pageref{example:getPersonDetails}
+
+\clearpage
+\label{example:getPersonDetails}
 \begin{lstlisting}
 --> {"method":"getPersonDetails", "params":[]}
 <-- {"result": {
@@ -316,6 +313,25 @@ The API exposes different methods. These methods are all grouped into modules. A
         "languagePreference": "nl",
         "imageUrl": "https://media.ia.utwente.nl/amelie/pasfoto/s1234567.jpg"
      }}
+\end{lstlisting}
+\end{enumerate}
+
+\clearpage
+\subsection{setLanguagePreference}
+\begin{enumerate}
+\item[Method] setLanguagePreference
+\item[Description] Sets the language preference for this user across all Inter-Actief services.
+\item[Authentication] REQUIRED (account)
+\item[Parameters] This method accepts the following parameters:
+\begin{enumerate}
+	\item[language] The preferred language (either "nl" or "en")
+\end{enumerate}
+\item[Returns] true
+\item[Errors] InvalidParamsError
+\item[Example]
+\begin{lstlisting}
+--> {"method":"setLanguagePreference", "params":["en"]}
+<-- {"result": true}
 \end{lstlisting}
 \end{enumerate}
 
@@ -385,25 +401,6 @@ The API exposes different methods. These methods are all grouped into modules. A
             }
         }
      }}
-\end{lstlisting}
-\end{enumerate}
-
-\clearpage
-\subsection{setLanguagePreference}
-\begin{enumerate}
-\item[Method] setLanguagePreference
-\item[Description] Sets the language preference for this user across all Inter-Actief services.
-\item[Authentication] REQUIRED (account)
-\item[Parameters] This method accepts the following parameters:
-\begin{enumerate}
-    \item[language] The preferred language (either "nl" or "en")
-    \end{enumerate}
-\item[Returns] true
-\item[Errors] InvalidParamsError
-\item[Example]
-\begin{lstlisting}
---> {"method":"setLanguagePreference", "params":["en"]}
-<-- {"result": true}
 \end{lstlisting}
 \end{enumerate}
 
@@ -816,12 +813,13 @@ The API exposes different methods. These methods are all grouped into modules. A
 \subsection{getActivityStream}\label{m:getActivityStream}
 \begin{enumerate}
 \item[Method] getActivityStream
-\item[Description] Retrieves a combined list of regular, educational and external activities.
+\item[Description] Retrieves a combined list of \textit{regular}, \textit{educational} and \textit{external} activities.
 \item[Authentication] OPTIONAL
 \item[Parameters] This method accepts the following parameters:
 \begin{enumerate}
 	\item[begin] The minimal end date, RFC3339 (inclusive)
     \item[end] The maximal begin date, RFC3339 (exclusive)
+    \item[mixed] Boolean value indicating whether the client supports a result of mixed activity types, OPTIONAL, default False
     \end{enumerate}
 \item[Returns] An array of dictionaries containing the following members:
 \begin{enumerate}
@@ -830,23 +828,25 @@ The API exposes different methods. These methods are all grouped into modules. A
     \item[beginDate] The starting date and time of this activity (RFC3339)
     \item[endDate] The end date and time of this activity (RFC3339)
     \item[location] The location of this activity
-    \item[source] The type of this activity (either "regular", "educational" or "external")
+    \item[category] The type of this activity (either "regular", "educational" or "external")
     \item[url] The URL for this activity
     \item[organizer] The organizer of this activity
+    \item[isDutch] Boolean value indicating whether the activity is Dutch-only
 	\end{enumerate}
 \item[Errors] InvalidParamsError
 \item[Example]
 \begin{lstlisting}
---> {"method":"getActivityStream", "params":["2014-07-01T00:00:00+02:00", "2014-07-31T23:59:59+02:00"]}
+--> {"method":"getActivityStream", "params":["2014-07-01T00:00:00+02:00", "2014-07-31T23:59:59+02:00", true]}
 <-- {"result": [{
         "id": 28,
         "title": "Project Evening",
         "beginDate": "2014-07-02T018:00:00+02:00",
         "endDate": "2014-07-03T08:00:00+02:00",
         "location": "Carre 2K",
-        "source": "regular",
+        "category": "regular",
         "url": "/activiteiten/28/",
-        "organizer": "Bestuur"
+        "organizer": "Bestuur",
+        "isDutch": false
     }, {...}, {...}]}
 \end{lstlisting}
 \end{enumerate}
@@ -866,8 +866,9 @@ The API exposes different methods. These methods are all grouped into modules. A
 \begin{enumerate}
     \item[organizer] The organizer of this activity
     \item[description] The description of this activity
+    \item[html] The HTML description of this activity
     \end{enumerate}
-\item[] \textit{If the source of the activity equals "regular", additional fields will be returned.\\Please refer to: \autoref{m:getActivityDetailedRegular}}
+\item[] \textit{If the category of the activity equals "regular", additional fields will be returned.\\Please refer to: \autoref{m:getActivityDetailedRegular}}
 
 \item[Errors]
     NotLoggedInError: Invalid or no authentication token received \\
@@ -879,13 +880,14 @@ The API exposes different methods. These methods are all grouped into modules. A
         ...,
         "organizer": "Bestuur",
         "description": "Super cool awesome activity with pizza!"
+        "html": "<p>Super cool awesome activity with pizza!</p>"
     }}
 \end{lstlisting}
 \end{enumerate}
 
 
 \clearpage
-\subsection{getActivityDetailed (source equals "regular")}\label{m:getActivityDetailedRegular}
+\subsection{getActivityDetailed ("regular" category)}\label{m:getActivityDetailedRegular}
 \begin{enumerate}
 \item[Method] getActivityDetailed
 \item[Description] Retrieves details of an event, including its signup options if available
@@ -989,7 +991,7 @@ The API exposes different methods. These methods are all grouped into modules. A
 \begin{enumerate}
 	\item[amount] The amount of activities
     \end{enumerate}
-\item[Returns] All fields returned by getActivityStream (\ref{m:getActivityStream}) additional to:
+\item[Returns] All fields returned by getActivityStream (\ref{m:getActivityStream}) in addition to:
 \begin{enumerate}
     \item[pictures] An array of URLs to pictures for this activity, or an empty array
     \item[thumbnails] A dictionary with the following properties:
@@ -1026,12 +1028,13 @@ The API exposes different methods. These methods are all grouped into modules. A
 \item[Parameters] This method accepts the following parameters:
 \begin{enumerate}
 	\item[amount] The amount of activities
+	\item[mixed] Boolean value indicating whether the client supports a result of mixed activity types, OPTIONAL, default False
     \end{enumerate}
 \item[Returns] All fields returned by getActivityStream (\ref{m:getActivityStream})
 \item[Errors] (none)
 \item[Example]
 \begin{lstlisting}
---> {"method":"getUpcomingActivities", "params":[50]}
+--> {"method":"getUpcomingActivities", "params":[50, true]}
 \end{lstlisting}
 \end{enumerate}
 
