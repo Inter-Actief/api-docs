@@ -51,4 +51,7 @@
  & 2017/03/07
  & \listset {boerpb}
  & added setLanguagePreference to person, reworked activities, moved getDeviceId to push, added deprecation warning to getAuthToken\\
+1.3
+ & 2021/11/15
+ & added a link to the request form for access to the API\\
 \end {longtable}

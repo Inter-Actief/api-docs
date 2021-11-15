@@ -1,3 +1,3 @@
-\def \vhCurrentVersion {1.2}
-\def \vhCurrentDate {2017/03/07}
-\newsetsimple \vhAllAuthorsSet {albertskja|boerpb|vollenbrockjhj}
+\def \vhCurrentVersion {1.3}
+\def \vhCurrentDate {2021/11/15}
+\newsetsimple \vhAllAuthorsSet {albertskja|boerpb|meulenkampt|vollenbrockjhj}
